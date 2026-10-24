@@ -1,0 +1,55 @@
+name: Check official Handy releases
+
+on:
+  schedule:
+    # Mondays, 16:23 UTC (09:23 PDT / 08:23 PST). Check releases, never main.
+    - cron: "23 16 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: handy-local-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.repository == 'SleepyGab/handy-local' && github.ref == 'refs/heads/handy-local'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      status: ${{ steps.sync.outputs.status }}
+      commit: ${{ steps.sync.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: handy-local
+          fetch-depth: 0
+
+      - name: Check release and prepare an isolated merge
+        id: sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/upstream_sync.py --prepare --publish --report-dir "$RUNNER_TEMP/upstream-sync"
+
+      - name: Save summary and human-submitted PR draft
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: upstream-sync-report
+          path: ${{ runner.temp }}/upstream-sync/
+          retention-days: 30
+
+  # Explicitly validate the prepared commit: a token-created branch does not
+  # reliably trigger push workflows. No write credentials reach these jobs.
+  validate:
+    needs: prepare
+    if: needs.prepare.outputs.status == 'ready' || needs.prepare.outputs.status == 'existing'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/local-validation.yml
+    with:
+      ref: ${{ needs.prepare.outputs.commit }}

@@ -1,0 +1,71 @@
+name: Handy Local validation
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+  workflow_dispatch:
+  pull_request:
+    branches: [handy-local]
+  push:
+    branches: [handy-local]
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+      - run: bun install --frozen-lockfile
+      - name: Validate synchronization and fork protections
+        run: |
+          bun run upstream:test
+          bun run check:local
+      - run: bun run lint
+      - run: bun run build
+      - run: bunx playwright install --with-deps chromium
+      - name: Test correction confirmation and dictionary transfer
+        run: bunx playwright test tests/corrections.spec.ts tests/dictionary-transfer.spec.ts --reporter=line
+      - name: Save browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: local-correction-browser-results
+          path: test-results/
+          retention-days: 14
+
+  native:
+    runs-on: macos-14
+    timeout-minutes: 60
+    env:
+      CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+      - name: Prepare required model resource
+        run: |
+          mkdir -p src-tauri/resources/models
+          curl --fail --location --retry 3 --output src-tauri/resources/models/silero_vad_v4.onnx https://blob.handy.computer/silero_vad_v4.onnx
+      - name: Test persistence, transfer, matching and local-only restrictions
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml --features local-only local_corrections --lib
+      - name: Check native integration
+        run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --features local-only --lib

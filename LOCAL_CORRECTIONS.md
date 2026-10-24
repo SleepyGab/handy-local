@@ -1,6 +1,8 @@
 # Handy Local — local corrections fork
 
-Based on Handy v0.9.8 (14f6f0d31cb22a4268acfbddba3052820fd0a06e).
+Originally based on Handy v0.9.8 (14f6f0d31cb22a4268acfbddba3052820fd0a06e).
+The current integrated release is recorded in [.github/upstream-sync.json](.github/upstream-sync.json).
+See the [upstream sync guide](docs/UPSTREAM_SYNC.zh-CN.md) for the preservation and validation policy.
 
 ## Behavior
 

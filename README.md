@@ -3,7 +3,8 @@
 Local voice dictation with a correction dictionary that stays on your Mac.
 
 An independent community fork of [Handy](https://github.com/cjpais/Handy),
-based on **v0.9.8**. Not an official Handy release or an endorsed project.
+originally based on **v0.9.8**. The [upstream baseline](.github/upstream-sync.json)
+records the currently integrated official release. Not an official Handy release or an endorsed project.
 Handy provides the dictation engine, model manager, shortcuts and application UI.
 This fork adds explicit local correction memory and a compact correction prompt.
 
@@ -67,6 +68,11 @@ Implementation, limitations and focused test commands: [LOCAL_CORRECTIONS.md](LO
 The original README is preserved in [README.upstream.md](README.upstream.md).
 Inherited upstream CI/release workflows are archived in `.github/upstream-workflows`
 and do not run in this fork. They refer to upstream infrastructure and signing keys.
+
+Official stable releases are checked weekly, with isolated sync branches and local
+correction validation. See the [sync guide](docs/UPSTREAM_SYNC.zh-CN.md) for manual
+checks, conflict handling, review and release steps. Nothing is automatically merged
+or published to app users.
 
 ## Contribute / upstream
 
