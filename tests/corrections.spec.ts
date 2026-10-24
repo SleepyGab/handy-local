@@ -151,7 +151,7 @@ test("English capsule fits native size and follows live interface language chang
   await mockCorrections(page, true, false, true, "en");
   await page.setViewportSize({ width: 414, height: 58 });
   await expect(
-    page.getByRole("button", { name: "Remember?", exact: true }),
+    page.getByRole("button", { name: "Add?", exact: true }),
   ).toBeVisible();
   const capsule = page.locator(".lc-capsule");
   await expect(capsule).toHaveCSS("height", "42px");
@@ -169,8 +169,8 @@ test("English capsule fits native size and follows live interface language chang
   await page.evaluate(() =>
     window.dispatchEvent(new CustomEvent("test-language", { detail: "en" })),
   );
-  await page.getByRole("button", { name: "Remember?", exact: true }).click();
-  await expect(page.getByRole("status")).toHaveText("Remembered");
+  await page.getByRole("button", { name: "Add?", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("Added");
 });
 
 test("clicking the phrase opens the full editor", async ({ page }) => {

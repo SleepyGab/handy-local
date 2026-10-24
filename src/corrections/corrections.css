@@ -50,7 +50,7 @@
   gap: 8px;
 }
 :root {
-  --lc-capsule-width: 398px;
+  --lc-capsule-width: 342px;
 }
 :root:lang(zh) {
   --lc-capsule-width: 342px;

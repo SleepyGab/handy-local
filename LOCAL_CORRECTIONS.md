@@ -9,8 +9,8 @@ Based on Handy v0.9.8 (14f6f0d31cb22a4268acfbddba3052820fd0a06e).
 - Open “Correct Last Dictation…” from the Handy menu bar icon; the item is enabled
   only while the recent in-memory dictation is available and recording is idle.
 - Only a detected word edit shows a 42px-high, single-row nonactivating capsule.
-  It shares Handy’s palette, with a wider English layout and live interface-language
-  updates ("记住？" / "Remember?"). Click the phrase to open the full editor.
+  It shares Handy’s palette, with live interface-language
+  updates ("记住？" / "Add?"). Click the phrase to open the full editor.
   Successful saves dismiss themselves after a short acknowledgement.
 - On macOS, observe only the exact focused accessibility text field captured
   immediately before the paste. Confirm the actual pasted baseline first.
