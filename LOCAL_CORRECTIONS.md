@@ -13,7 +13,10 @@ Based on Handy v0.9.8 (14f6f0d31cb22a4268acfbddba3052820fd0a06e).
   updates ("记住？" / "Add?"). Click the phrase to open the full editor.
   Successful saves dismiss themselves after a short acknowledgement.
 - On macOS, observe only the exact focused accessibility text field captured
-  immediately before the paste. Confirm the actual pasted baseline first.
+  immediately before the paste. Allow up to 3 seconds for the actual pasted
+  baseline to settle. During this initial handshake only, accept CRLF/LF and
+  trailing-newline normalization when the exact dictated text is unambiguous
+  and the surrounding words match. Subsequent context checks stay strict.
 - Watch for up to 45 seconds, stopping when focus changes, surrounding text
   changes, the next recording starts, or corrections are disabled.
 - Retry at most three transient AX read gaps on the original captured field; a

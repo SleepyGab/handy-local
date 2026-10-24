@@ -451,8 +451,36 @@ pub fn initialize(app: &AppHandle) {
                 continue;
             }
         };
-        // Only accept edits within the exact dictated span. The surrounding
-        // field must still match; changing other text stops observation.
+        if !session.baseline {
+            match check_baseline(
+                &snapshot.text,
+                &session.original,
+                &session.prefix,
+                &session.suffix,
+                session.started.elapsed(),
+            ) {
+                BaselineCheck::Confirmed(prefix, suffix) => {
+                    let normalized = prefix != session.prefix || suffix != session.suffix;
+                    session.prefix = prefix;
+                    session.suffix = suffix;
+                    session.baseline = true;
+                    session.stable_since = Instant::now();
+                    log::info!("Correction detection {}: pasted baseline confirmed (normalized line endings: {})", session.id, normalized);
+                }
+                BaselineCheck::Expired => {
+                    log::info!(
+                        "Correction detection {}: pasted baseline unavailable",
+                        session.id
+                    );
+                    session.observing = false;
+                    publish(&app, &state);
+                }
+                BaselineCheck::Pending => {}
+            }
+            continue;
+        }
+        // After confirming the paste, use the actual anchors strictly. The
+        // normalization exception applies only to the initial handshake.
         let Some(current) = extract_span(&snapshot.text, &session.prefix, &session.suffix) else {
             log::info!(
                 "Correction detection {}: surrounding text changed",
@@ -462,23 +490,6 @@ pub fn initialize(app: &AppHandle) {
             publish(&app, &state);
             continue;
         };
-        if !session.baseline {
-            if current == session.original {
-                session.baseline = true;
-                log::info!(
-                    "Correction detection {}: pasted baseline confirmed",
-                    session.id
-                );
-            } else if session.started.elapsed() > Duration::from_secs(3) {
-                log::info!(
-                    "Correction detection {}: pasted baseline unavailable",
-                    session.id
-                );
-                session.observing = false;
-                publish(&app, &state);
-            }
-            continue;
-        }
         if current != session.stable_text {
             session.stable_text = current.to_string();
             session.stable_since = Instant::now();
@@ -505,6 +516,68 @@ pub fn initialize(app: &AppHandle) {
         publish(&app, &state);
         popup(&app, show);
     });
+}
+
+#[derive(Debug, PartialEq)]
+enum BaselineCheck {
+    Pending,
+    Confirmed(String, String),
+    Expired,
+}
+
+fn check_baseline(
+    text: &str,
+    original: &str,
+    prefix: &str,
+    suffix: &str,
+    elapsed: Duration,
+) -> BaselineCheck {
+    if let Some((prefix, suffix)) = baseline_anchors(text, original, prefix, suffix) {
+        BaselineCheck::Confirmed(prefix, suffix)
+    } else if elapsed >= Duration::from_secs(3) {
+        BaselineCheck::Expired
+    } else {
+        // Rich editors may briefly expose the pre-paste or an intermediate AX
+        // value. An anchor mismatch at this stage must not abort immediately.
+        BaselineCheck::Pending
+    }
+}
+
+fn baseline_anchors(
+    text: &str,
+    original: &str,
+    prefix: &str,
+    suffix: &str,
+) -> Option<(String, String)> {
+    if original.is_empty() {
+        return None;
+    }
+    if extract_span(text, prefix, suffix) == Some(original) {
+        return Some((prefix.into(), suffix.into()));
+    }
+    // Only exact, unambiguous dictated text can establish a baseline. Permit
+    // CRLF/LF and trailing newline normalization in the surrounding text;
+    // never infer a baseline from edited words or arbitrary new surroundings.
+    let mut matches = text.match_indices(original);
+    let (at, _) = matches.next()?;
+    if matches.next().is_some() {
+        return None;
+    }
+    let actual_prefix = &text[..at];
+    let actual_suffix = &text[at + original.len()..];
+    fn normalized(value: &str) -> String {
+        value
+            .replace("\r\n", "\n")
+            .trim_end_matches(['\r', '\n'])
+            .to_owned()
+    }
+    if normalized(actual_prefix) == normalized(prefix)
+        && normalized(actual_suffix) == normalized(suffix)
+    {
+        Some((actual_prefix.into(), actual_suffix.into()))
+    } else {
+        None
+    }
 }
 
 fn extract_span<'a>(text: &'a str, prefix: &str, suffix: &str) -> Option<&'a str> {
@@ -858,6 +931,62 @@ mod tests {
         assert!(split_utf16("🙂你好", 1, 1).is_none());
         assert_eq!(extract_span("前新名字后", "前", "后"), Some("新名字"));
         assert_eq!(extract_span("别处改了新名字后", "前", "后"), None);
+    }
+    #[test]
+    fn initial_paste_waits_for_editor_to_settle() {
+        assert_eq!(
+            check_baseline("", "今天吃苹果。", "", "\n", Duration::from_millis(400)),
+            BaselineCheck::Pending
+        );
+        assert_eq!(
+            check_baseline(
+                "今天吃苹果。",
+                "今天吃苹果。",
+                "",
+                "\n",
+                Duration::from_millis(800)
+            ),
+            BaselineCheck::Confirmed("".into(), "".into())
+        );
+        assert_eq!(
+            check_baseline("其他文字", "今天吃苹果。", "", "", Duration::from_secs(3)),
+            BaselineCheck::Expired
+        );
+    }
+    #[test]
+    fn baseline_normalizes_newlines_but_rejects_unrelated_context() {
+        assert_eq!(
+            baseline_anchors("前\n今天吃苹果。", "今天吃苹果。", "前\r\n", "\n"),
+            Some(("前\n".into(), "".into()))
+        );
+        assert_eq!(
+            baseline_anchors("今天吃苹果。\n", "今天吃苹果。", "", ""),
+            Some(("".into(), "\n".into()))
+        );
+        assert_eq!(
+            baseline_anchors("另外今天吃苹果。", "今天吃苹果。", "", "\n"),
+            None
+        );
+        assert_eq!(
+            baseline_anchors("今天吃香蕉。", "今天吃苹果。", "", "\n"),
+            None
+        );
+        assert_eq!(
+            baseline_anchors("今天吃苹果。今天吃苹果。", "今天吃苹果。", "", "\n"),
+            None
+        );
+        assert_eq!(
+            baseline_anchors("前 文今天吃苹果。", "今天吃苹果。", "前文", ""),
+            None
+        );
+        // Once established, subsequent changes outside the dictated span are
+        // still rejected, including changes to the actual newline suffix.
+        let (prefix, suffix) = baseline_anchors("今天吃苹果。\n", "今天吃苹果。", "", "").unwrap();
+        assert_eq!(
+            extract_span("今天吃香蕉。\n", &prefix, &suffix),
+            Some("今天吃香蕉。")
+        );
+        assert_eq!(extract_span("今天吃香蕉。", &prefix, &suffix), None);
     }
     #[test]
     fn infer_word_corrections_but_not_typing_or_sentences() {
