@@ -30,7 +30,12 @@ static char *json(NSDictionary *value) {
     if (!data) return NULL;
     return strndup(data.bytes, data.length);
 }
-void *lc_capture(void) {
+// Status codes expose only failure categories, never field contents or app names.
+// 1: focus changed; 2: focus unavailable; 3: text unavailable;
+// 4: selection unavailable; 5: invalid selection; 6: serialization;
+// 7: own app or invalid owner.
+void *lc_capture(int *status) {
+    *status = 2;
     @autoreleasepool {
         AXUIElementRef system = AXUIElementCreateSystemWide();
         AXUIElementSetMessagingTimeout(system, 0.2);
@@ -40,14 +45,17 @@ void *lc_capture(void) {
         AXUIElementRef element = (__bridge AXUIElementRef)focused;
         AXUIElementSetMessagingTimeout(element, 0.2);
         pid_t pid = 0;
-        if (AXUIElementGetPid(element, &pid) != kAXErrorSuccess || pid == getpid() || !fieldText(element)) return NULL;
+        if (AXUIElementGetPid(element, &pid) != kAXErrorSuccess || pid == getpid()) { *status = 7; return NULL; }
+        if (!fieldText(element)) { *status = 3; return NULL; }
         LCField *field = [LCField new];
         field.element = (AXUIElementRef)CFRetain(element);
         field.pid = pid;
+        *status = 0;
         return (__bridge_retained void *)field;
     }
 }
-char *lc_snapshot(void *handle, bool requireFocus) {
+char *lc_snapshot(void *handle, bool requireFocus, int *status) {
+    *status = 2;
     @autoreleasepool {
         LCField *field = (__bridge LCField *)handle;
         if (!field) return NULL;
@@ -56,15 +64,19 @@ char *lc_snapshot(void *handle, bool requireFocus) {
             AXUIElementSetMessagingTimeout(system, 0.2);
             id focused = attribute(system, kAXFocusedUIElementAttribute);
             CFRelease(system);
-            if (!focused || !CFEqual((__bridge CFTypeRef)focused, field.element)) return NULL;
+            if (!focused || CFGetTypeID((__bridge CFTypeRef)focused) != AXUIElementGetTypeID()) return NULL;
+            if (!CFEqual((__bridge CFTypeRef)focused, field.element)) { *status = 1; return NULL; }
         }
         NSString *text = fieldText(field.element);
+        if (!text) { *status = 3; return NULL; }
         id selected = attribute(field.element, kAXSelectedTextRangeAttribute);
         CFRange range;
-        if (!text || !selected || CFGetTypeID((__bridge CFTypeRef)selected) != AXValueGetTypeID() ||
-            !AXValueGetValue((__bridge AXValueRef)selected, kAXValueCFRangeType, &range) ||
-            range.location < 0 || range.length < 0 || range.location + range.length > text.length) return NULL;
-        return json(@{@"text":text, @"start":@(range.location), @"length":@(range.length)});
+        if (!selected || CFGetTypeID((__bridge CFTypeRef)selected) != AXValueGetTypeID() ||
+            !AXValueGetValue((__bridge AXValueRef)selected, kAXValueCFRangeType, &range)) { *status = 4; return NULL; }
+        if (range.location < 0 || range.length < 0 || range.location + range.length > text.length) { *status = 5; return NULL; }
+        char *result = json(@{@"text":text, @"start":@(range.location), @"length":@(range.length)});
+        *status = result ? 0 : 6;
+        return result;
     }
 }
 bool lc_replace(void *handle, const char *expectedUTF8, long start, long length, const char *replacementUTF8) {

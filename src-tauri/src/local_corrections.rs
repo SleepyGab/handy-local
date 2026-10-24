@@ -70,13 +70,54 @@ struct Snapshot {
     length: usize,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum ReadFailure {
+    FocusChanged,
+    FocusUnavailable,
+    TextUnavailable,
+    SelectionUnavailable,
+    InvalidSelection,
+    Serialization,
+    InvalidOwner,
+}
+impl ReadFailure {
+    fn from_status(status: i32) -> Self {
+        match status {
+            1 => Self::FocusChanged,
+            3 => Self::TextUnavailable,
+            4 => Self::SelectionUnavailable,
+            5 => Self::InvalidSelection,
+            6 => Self::Serialization,
+            7 => Self::InvalidOwner,
+            _ => Self::FocusUnavailable,
+        }
+    }
+}
+
+// Never reacquire a different field. Brief AX gaps may recover on the original
+// handle, but explicit focus changes stop immediately and errors stay bounded.
+#[derive(Default)]
+struct ReadRetries(u8);
+impl ReadRetries {
+    fn should_stop(&mut self, failure: ReadFailure) -> bool {
+        self.0 = self.0.saturating_add(1);
+        matches!(
+            failure,
+            ReadFailure::FocusChanged | ReadFailure::InvalidOwner
+        ) || self.0 >= 4
+    }
+    fn recovered(&mut self) {
+        self.0 = 0;
+    }
+}
+
 #[cfg(target_os = "macos")]
 mod native {
-    use super::Snapshot;
+    use super::{ReadFailure, Snapshot};
     use std::ffi::{c_char, c_void, CStr, CString};
     unsafe extern "C" {
-        fn lc_capture() -> *mut c_void;
-        fn lc_snapshot(handle: *mut c_void, focused: bool) -> *mut c_char;
+        fn lc_capture(status: *mut i32) -> *mut c_void;
+        fn lc_snapshot(handle: *mut c_void, focused: bool, status: *mut i32) -> *mut c_char;
         fn lc_replace(
             handle: *mut c_void,
             expected: *const c_char,
@@ -93,16 +134,25 @@ mod native {
     unsafe impl Send for Field {}
     impl Field {
         pub fn capture() -> Option<Self> {
-            let p = unsafe { lc_capture() };
+            let mut status = 0;
+            let p = unsafe { lc_capture(&mut status) };
+            if p.is_null() {
+                log::info!(
+                    "Correction detection: capture unavailable ({:?})",
+                    ReadFailure::from_status(status)
+                );
+            }
             (!p.is_null()).then_some(Self(p))
         }
-        pub fn read(&self, focused: bool) -> Option<Snapshot> {
+        pub fn read(&self, focused: bool) -> Result<Snapshot, ReadFailure> {
             unsafe {
-                let p = lc_snapshot(self.0, focused);
+                let mut status = 0;
+                let p = lc_snapshot(self.0, focused, &mut status);
                 if p.is_null() {
-                    return None;
+                    return Err(ReadFailure::from_status(status));
                 }
-                let value = serde_json::from_slice(CStr::from_ptr(p).to_bytes()).ok();
+                let value = serde_json::from_slice(CStr::from_ptr(p).to_bytes())
+                    .map_err(|_| ReadFailure::Serialization);
                 lc_free(p);
                 value
             }
@@ -130,14 +180,14 @@ mod native {
 }
 #[cfg(not(target_os = "macos"))]
 mod native {
-    use super::Snapshot;
+    use super::{ReadFailure, Snapshot};
     pub struct Field;
     impl Field {
         pub fn capture() -> Option<Self> {
             None
         }
-        pub fn read(&self, _: bool) -> Option<Snapshot> {
-            None
+        pub fn read(&self, _: bool) -> Result<Snapshot, ReadFailure> {
+            Err(ReadFailure::FocusUnavailable)
         }
         pub fn replace(&self, _: &str, _: usize, _: usize, _: &str) -> bool {
             false
@@ -161,6 +211,7 @@ struct Session {
     observing: bool,
     stable_text: String,
     stable_since: Instant,
+    read_retries: ReadRetries,
     suggestion: Option<Rule>,
     dismissed: bool,
     editing: bool,
@@ -362,19 +413,51 @@ pub fn initialize(app: &AppHandle) {
             continue;
         }
         if session.started.elapsed() > Duration::from_secs(45) {
+            log::info!("Correction detection {}: observation expired", session.id);
             session.observing = false;
             publish(&app, &state);
             continue;
         }
-        let snapshot = session.field.as_ref().and_then(|field| field.read(true));
-        let Some(snapshot) = snapshot else {
-            session.observing = false;
-            publish(&app, &state);
-            continue;
+        let snapshot = session
+            .field
+            .as_ref()
+            .ok_or(ReadFailure::FocusUnavailable)
+            .and_then(|field| field.read(true));
+        let snapshot = match snapshot {
+            Ok(snapshot) => {
+                session.read_retries.recovered();
+                snapshot
+            }
+            Err(reason) => {
+                let stop = session.read_retries.should_stop(reason);
+                if session.read_retries.0 == 1 || stop {
+                    log::info!(
+                        "Correction detection {}: {} ({:?})",
+                        session.id,
+                        if stop {
+                            "stopped"
+                        } else {
+                            "retrying original field"
+                        },
+                        reason
+                    );
+                }
+                // Missing samples cannot count toward the edit stability timer.
+                session.stable_since = Instant::now();
+                if stop {
+                    session.observing = false;
+                    publish(&app, &state);
+                }
+                continue;
+            }
         };
         // Only accept edits within the exact dictated span. The surrounding
         // field must still match; changing other text stops observation.
         let Some(current) = extract_span(&snapshot.text, &session.prefix, &session.suffix) else {
+            log::info!(
+                "Correction detection {}: surrounding text changed",
+                session.id
+            );
             session.observing = false;
             publish(&app, &state);
             continue;
@@ -382,7 +465,15 @@ pub fn initialize(app: &AppHandle) {
         if !session.baseline {
             if current == session.original {
                 session.baseline = true;
+                log::info!(
+                    "Correction detection {}: pasted baseline confirmed",
+                    session.id
+                );
             } else if session.started.elapsed() > Duration::from_secs(3) {
+                log::info!(
+                    "Correction detection {}: pasted baseline unavailable",
+                    session.id
+                );
                 session.observing = false;
                 publish(&app, &state);
             }
@@ -402,6 +493,15 @@ pub fn initialize(app: &AppHandle) {
         session.current = current.to_string();
         session.suggestion = infer_rule(&session.original, current);
         let show = !session.dismissed && session.suggestion.is_some();
+        log::info!(
+            "Correction detection {}: {}",
+            session.id,
+            if show {
+                "suggestion ready"
+            } else {
+                "edit not eligible or already dismissed"
+            }
+        );
         publish(&app, &state);
         popup(&app, show);
     });
@@ -426,7 +526,15 @@ pub fn capture(app: &AppHandle) -> Option<Capture> {
         return None;
     }
     let field = native::Field::capture()?;
-    let before = field.read(true)?;
+    let before = field
+        .read(true)
+        .map_err(|reason| {
+            log::info!(
+                "Correction detection: initial snapshot unavailable ({:?})",
+                reason
+            );
+        })
+        .ok()?;
     Some(Capture { field, before })
 }
 pub fn begin(app: &AppHandle, text: String, capture: Option<Capture>) {
@@ -446,6 +554,15 @@ pub fn begin(app: &AppHandle, text: String, capture: Option<Capture>) {
     };
     state.next_id = state.next_id.wrapping_add(1);
     let observing = field.is_some();
+    log::info!(
+        "Correction detection {}: {}",
+        state.next_id,
+        if observing {
+            "observing original field"
+        } else {
+            "manual correction only"
+        }
+    );
     state.session = Some(Session {
         id: state.next_id,
         original: text.clone(),
@@ -458,6 +575,7 @@ pub fn begin(app: &AppHandle, text: String, capture: Option<Capture>) {
         observing,
         stable_text: text,
         stable_since: Instant::now(),
+        read_retries: ReadRetries::default(),
         suggestion: None,
         dismissed: false,
         editing: false,
@@ -757,6 +875,29 @@ mod tests {
         assert_eq!(
             infer_rule("write a long report", "send the draft now"),
             None
+        );
+    }
+    #[test]
+    fn temporary_ax_gaps_are_bounded_and_focus_changes_stop_immediately() {
+        let mut retries = ReadRetries::default();
+        assert!(!retries.should_stop(ReadFailure::SelectionUnavailable));
+        assert!(!retries.should_stop(ReadFailure::TextUnavailable));
+        retries.recovered();
+        assert!(!retries.should_stop(ReadFailure::FocusUnavailable));
+        assert!(retries.should_stop(ReadFailure::FocusChanged));
+        let mut retries = ReadRetries::default();
+        for _ in 0..3 {
+            assert!(!retries.should_stop(ReadFailure::SelectionUnavailable));
+        }
+        assert!(retries.should_stop(ReadFailure::SelectionUnavailable));
+    }
+    #[test]
+    fn deletion_then_replacement_is_compared_to_original_dictation() {
+        let original = "今天吃苹果。";
+        assert_eq!(infer_rule(original, "今天吃。"), None);
+        assert_eq!(
+            infer_rule(original, "今天吃香蕉。"),
+            Some(r("苹果", "香蕉"))
         );
     }
     #[cfg(feature = "local-only")]

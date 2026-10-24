@@ -16,6 +16,10 @@ Based on Handy v0.9.8 (14f6f0d31cb22a4268acfbddba3052820fd0a06e).
   immediately before the paste. Confirm the actual pasted baseline first.
 - Watch for up to 45 seconds, stopping when focus changes, surrounding text
   changes, the next recording starts, or corrections are disabled.
+- Retry at most three transient AX read gaps on the original captured field; a
+  confirmed focus change stops immediately. Never reacquire a different field.
+  Local detection logs contain only fixed status categories and session counters,
+  never text, selected words, window titles, or application names.
 - After an edit is stable for 1.2 seconds and no text is selected, propose a
   small replacement. Additions, deletions, punctuation edits and sentence
   rewrites do not automatically become dictionary entries.
