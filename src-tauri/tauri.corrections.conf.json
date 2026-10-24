@@ -1,0 +1,12 @@
+{
+  "productName": "Handy Local",
+  "identifier": "com.gabrielle.handylocal",
+  "bundle": {
+    "createUpdaterArtifacts": false
+  },
+  "app": {
+    "security": {
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
+    }
+  }
+}

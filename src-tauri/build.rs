@@ -1,4 +1,6 @@
 fn main() {
+    #[cfg(target_os = "macos")]
+    build_local_corrections_bridge();
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     build_apple_intelligence_bridge();
 
@@ -577,4 +579,29 @@ fn is_command_line_tools_only() -> bool {
         .and_then(|out| String::from_utf8(out.stdout).ok())
         .map(|path| path.trim().ends_with("CommandLineTools"))
         .unwrap_or(false)
+}
+
+#[cfg(target_os = "macos")]
+fn build_local_corrections_bridge() {
+    use std::{path::PathBuf, process::Command};
+    println!("cargo:rerun-if-changed=native/local_corrections.m");
+    let out = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+    let object = out.join("local_corrections.o");
+    assert!(Command::new("clang")
+        .args(["-fobjc-arc", "-c", "native/local_corrections.m", "-o"])
+        .arg(&object)
+        .status()
+        .unwrap()
+        .success());
+    assert!(Command::new("ar")
+        .arg("rcs")
+        .arg(out.join("liblocal_corrections.a"))
+        .arg(object)
+        .status()
+        .unwrap()
+        .success());
+    println!("cargo:rustc-link-search=native={}", out.display());
+    println!("cargo:rustc-link-lib=static=local_corrections");
+    println!("cargo:rustc-link-lib=framework=ApplicationServices");
+    println!("cargo:rustc-link-lib=framework=AppKit");
 }

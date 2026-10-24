@@ -1,0 +1,169 @@
+/* Scoped so the corrections settings cannot restyle Handy's existing UI. */
+body:has(> #root > .lc) {
+  margin: 0;
+  background: #f7f8fb;
+}
+.lc {
+  box-sizing: border-box;
+  padding: 15px 18px;
+  color: #172037;
+  font:
+    13px/1.45 -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  background: #f7f8fb;
+  min-height: 100%;
+}
+.lc header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.lc header strong {
+  font-size: 14px;
+}
+.lc button {
+  border: 1px solid #ccd1de;
+  border-radius: 7px;
+  padding: 6px 12px;
+  background: white;
+  color: #172037;
+  cursor: pointer;
+  font: inherit;
+}
+.lc button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.lc button:focus-visible,
+.lc input:focus-visible,
+.lc textarea:focus-visible {
+  outline: 2px solid #6558d4;
+  outline-offset: 2px;
+}
+.lc button.lc-primary {
+  background: #5547bb;
+  border-color: #5547bb;
+  color: white;
+}
+.lc .lc-close {
+  border: none;
+  background: transparent;
+  padding: 0 6px;
+  font-size: 19px;
+}
+.lc footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 9px;
+}
+.lc-hint {
+  color: #626b80;
+  margin: 8px 0;
+  font-size: 12px;
+}
+.lc-pair {
+  display: flex;
+  gap: 12px;
+  margin: 7px 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.lc-original {
+  width: 100%;
+  height: 85px;
+  resize: none;
+  box-sizing: border-box;
+  padding: 9px;
+  border: 1px solid #ccd1de;
+  border-radius: 7px;
+  color: #172037;
+  background: white;
+  font: inherit;
+}
+.lc-fields {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.lc-fields label {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+}
+.lc-fields input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #ccd1de;
+  border-radius: 6px;
+  font: inherit;
+  background: white;
+  color: #172037;
+}
+.lc-warning {
+  color: #8b4e00;
+  font-size: 12px;
+}
+.lc-message {
+  margin: 7px 0;
+  color: #5547bb;
+  font-size: 12px;
+}
+.lc-settings {
+  border-radius: 10px;
+  padding: 24px;
+}
+.lc-settings h2 {
+  font-size: 20px;
+  font-weight: 650;
+}
+.lc-settings h3 {
+  font-size: 15px;
+  font-weight: 650;
+  margin-top: 24px;
+}
+.lc-toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 18px 0;
+}
+.lc-rule {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #dce0e9;
+  padding: 12px 0;
+  overflow-wrap: anywhere;
+}
+.lc-arrow {
+  padding: 0 12px;
+  color: #697389;
+}
+@media (prefers-color-scheme: dark) {
+  .lc {
+    background: #20232d;
+    color: #edf0fa;
+  }
+  .lc button,
+  .lc-fields input,
+  .lc-original {
+    background: #2e3342;
+    color: #edf0fa;
+    border-color: #515a71;
+  }
+  .lc-hint {
+    color: #b0b8ce;
+  }
+  .lc-message {
+    color: #b9aeff;
+  }
+  .lc-warning {
+    color: #ffd392;
+  }
+}
