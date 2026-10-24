@@ -45,3 +45,12 @@ result
 
 # Python bytecode (scripts/)
 __pycache__/
+
+# Local release output and private runtime data
+/release-artifacts/
+.env
+.env.*
+!.env.example
+local_corrections*.json
+settings_store.json
+Handy-Local-Dictionary*.json
