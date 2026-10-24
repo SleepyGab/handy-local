@@ -39,6 +39,22 @@ Based on Handy v0.9.8 (14f6f0d31cb22a4268acfbddba3052820fd0a06e).
   `~/Library/Application Support/com.gabrielle.handylocal/local_corrections.json`
   using an atomic rename and owner-only file permissions.
 
+## Dictionary transfer
+
+Local corrections → Remembered words has Export dictionary / Import dictionary
+buttons (English, Simplified Chinese and Traditional Chinese). Export chooses a
+local JSON file containing only confirmed `from`/`to` rules, tagged
+`handy-local-dictionary` version 1. It excludes recordings, transcripts, model
+files, and settings. Import also accepts the old `local_corrections.json` file.
+
+Import previews additions, duplicates and conflicts before changing anything.
+Duplicates are skipped; conflicts default to keeping the current computer's
+version, with an explicit option to use the imported version. The enabled setting
+is preserved. Any changed import first saves the previous dictionary to
+`local_corrections.before-import.json` in the app data directory. A failed backup
+or a dictionary changed since preview prevents the import. Invalid files are
+rejected in full; limits are 8 MiB and 10,000 rules. All file processing is local.
+
 ## Privacy boundary
 
 The `local-only` Cargo feature blocks remote chat-completion/model-list requests,
@@ -73,7 +89,7 @@ bun run build
 bun run lint
 CMAKE_POLICY_VERSION_MINIMUM=3.5 cargo clippy --manifest-path src-tauri/Cargo.toml \
   --features local-only --lib
-bunx playwright test tests/corrections.spec.ts --reporter=line
+bunx playwright test tests/corrections.spec.ts tests/dictionary-transfer.spec.ts --reporter=line
 ```
 
 The UI tests mock the IPC boundary; they do not prove real macOS accessibility

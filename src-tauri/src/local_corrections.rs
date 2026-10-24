@@ -15,6 +15,8 @@ use tauri_nspanel::{
     tauri_panel, CollectionBehavior, ManagerExt, PanelBuilder, PanelLevel, StyleMask,
 };
 use tauri_plugin_clipboard_manager::ClipboardExt;
+#[path = "corrections_transfer.rs"]
+pub mod transfer;
 #[cfg(target_os = "macos")]
 tauri_panel! { panel!(CorrectionPanel { config: { can_become_key_window: true, is_floating_panel: true } }) }
 
@@ -326,6 +328,7 @@ fn persist(state: &mut State, dictionary: Dictionary) -> Result<(), String> {
 }
 
 pub fn initialize(app: &AppHandle) {
+    transfer::initialize(app);
     let Ok(dir) = crate::portable::app_data_dir(app) else {
         return;
     };

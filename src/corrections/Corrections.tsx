@@ -4,6 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 import { Sparkles, X, ArrowRight, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import "./corrections.css";
+import { DictionaryTransfer } from "./DictionaryTransfer";
 
 type Rule = { from: string; to: string };
 type Last = {
@@ -317,7 +318,7 @@ export function CorrectionsSettings() {
       {(error || state?.storage_error) && (
         <p role="alert">{error || t("corrections.storage")}</p>
       )}
-      <h3>{t("corrections.dictionary")}</h3>
+      <DictionaryTransfer disabled={!state || !!state.storage_error} />
       <p className="lc-hint">{t("corrections.exactHint")}</p>
       {!state?.rules.length && <p>{t("corrections.empty")}</p>}
       {state?.rules.map((rule) => (

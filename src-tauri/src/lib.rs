@@ -656,6 +656,7 @@ pub fn run(cli_args: CliArgs) {
         .commands(collect_commands![
             local_corrections::corrections_state,
             local_corrections::corrections_action,
+            local_corrections::transfer::corrections_transfer,
             shortcut::change_binding,
             shortcut::reset_binding,
             shortcut::change_shortcut_activation_setting,

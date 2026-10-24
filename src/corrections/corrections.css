@@ -416,3 +416,76 @@
   padding: 0 12px;
   color: var(--lc-muted);
 }
+.lc-transfer {
+  margin-top: 24px;
+}
+.lc-dictionary-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.lc-settings .lc-dictionary-heading h3 {
+  margin: 0;
+}
+.lc-transfer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lc-transfer-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.lc-import-preview {
+  border: 1px solid var(--lc-border);
+  border-radius: 14px;
+  padding: 16px;
+  margin: 12px 0;
+}
+.lc-import-preview p {
+  font-size: 12px;
+}
+.lc-conflicts {
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 12px 0;
+}
+.lc-conflict {
+  display: grid;
+  gap: 3px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--lc-border);
+  overflow-wrap: anywhere;
+}
+.lc-conflict span {
+  color: var(--lc-muted);
+  font-size: 12px;
+}
+.lc-conflict-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  margin: 12px 0;
+}
+.lc-conflict-choice select {
+  font: inherit;
+  border-radius: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--lc-border);
+  background: var(--color-background);
+  color: var(--color-text);
+}
+.lc-import-actions {
+  justify-content: flex-end;
+}
+.lc-transfer-error {
+  color: var(--color-error);
+  font-size: 12px;
+}
