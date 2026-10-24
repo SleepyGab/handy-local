@@ -18,8 +18,8 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 #[cfg(target_os = "macos")]
 tauri_panel! { panel!(CorrectionPanel { config: { can_become_key_window: true, is_floating_panel: true } }) }
 
-const PROMPT_WIDTH: f64 = 344.0;
-const PROMPT_HEIGHT: f64 = 156.0;
+const PROMPT_WIDTH: f64 = 414.0;
+const PROMPT_HEIGHT: f64 = 58.0;
 const EDITOR_WIDTH: f64 = 440.0;
 const EDITOR_HEIGHT: f64 = 360.0;
 static RECENT_DICTATION: AtomicBool = AtomicBool::new(false);
@@ -693,7 +693,7 @@ pub fn corrections_action(
                 s.baseline = false;
                 s.field = None;
             }
-            if !s.editing {
+            if !s.editing && result == "saved_copy" {
                 if let Some(w) = app.get_webview_window("correction") {
                     let _ = w.set_size(tauri::LogicalSize::new(PROMPT_WIDTH, 212.0));
                 }

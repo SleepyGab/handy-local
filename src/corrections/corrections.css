@@ -14,6 +14,9 @@
 .correction-window #root {
   box-sizing: border-box;
   padding: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
 }
 .lc {
   --lc-muted: color-mix(
@@ -35,6 +38,7 @@
     sans-serif;
 }
 .lc-card {
+  width: 100%;
   padding: 13px 14px 12px;
   border-radius: 18px;
   background: var(--color-background);
@@ -44,6 +48,111 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+:root {
+  --lc-capsule-width: 398px;
+}
+:root:lang(zh) {
+  --lc-capsule-width: 342px;
+}
+.lc-capsule {
+  height: 42px;
+  width: var(--lc-capsule-width);
+  max-width: 100%;
+  min-width: 0;
+  padding: 0 9px 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 999px;
+  background: var(--color-background);
+  border: 1px solid var(--lc-border);
+  transition: width 250ms ease;
+  --lc-accent: var(--color-background-ui);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lc-capsule {
+    --lc-accent: var(--dark-color-logo-primary);
+  }
+}
+:root[data-theme="dark"] .lc-capsule {
+  --lc-accent: var(--dark-color-logo-primary);
+}
+.lc button.lc-capsule-pair {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  letter-spacing: -0.15px;
+}
+.lc-capsule-pair span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.lc-before {
+  color: var(--lc-muted);
+}
+.lc-after {
+  font-weight: 500;
+}
+.lc-capsule-pair svg {
+  color: var(--lc-muted);
+  flex-shrink: 0;
+  opacity: 0.65;
+}
+.lc button.lc-remember {
+  border: 0;
+  min-height: 28px;
+  padding: 0 10px;
+  color: var(--lc-accent);
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.lc-capsule .lc-close {
+  flex-shrink: 0;
+  margin-left: -8px;
+}
+.lc-capsule-saved {
+  width: 150px;
+  justify-content: center;
+  padding: 0 18px;
+  animation: lc-fade-out 200ms ease 1400ms forwards;
+}
+.lc-ack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.lc-ack svg {
+  color: var(--lc-accent);
+}
+.lc-capsule-error {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+@keyframes lc-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-capsule {
+    transition: none;
+    animation: none;
+  }
 }
 .lc header {
   display: flex;

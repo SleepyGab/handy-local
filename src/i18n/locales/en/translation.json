@@ -757,6 +757,8 @@
     "empty": "No phrases remembered yet.",
     "delete": "Delete",
     "adjust": "Edit phrase",
-    "menuHint": "Use the Handy menu bar icon → Correct Last Dictation within 2 minutes of dictating. Ordinary dictation stays quiet; only detected edits show a suggestion."
+    "menuHint": "Use the Handy menu bar icon → Correct Last Dictation within 2 minutes of dictating. Ordinary dictation stays quiet; only detected edits show a suggestion.",
+    "rememberPrompt": "Remember?",
+    "remembered": "Remembered"
   }
 }

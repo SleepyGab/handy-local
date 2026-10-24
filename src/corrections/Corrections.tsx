@@ -103,6 +103,59 @@ export function CorrectionPopup() {
   ].includes(message)
     ? message
     : "error";
+  if (!last.editing && message !== "saved_copy") {
+    return (
+      <main
+        className={`lc lc-capsule ${saved ? "lc-capsule-saved" : ""}`}
+        aria-label={t("corrections.prompt")}
+      >
+        {saved ? (
+          <span className="lc-ack" role="status">
+            <Check size={14} aria-hidden="true" />
+            {t("corrections.remembered")}
+          </span>
+        ) : (
+          <>
+            {message ? (
+              <span
+                className="lc-capsule-error"
+                role="status"
+                title={t(`corrections.${errorKey}`)}
+              >
+                {t(`corrections.${errorKey}`)}
+              </span>
+            ) : (
+              <button
+                className="lc-capsule-pair"
+                aria-label={t("corrections.adjust")}
+                title={`${from} → ${to}`}
+                disabled={busy}
+                onClick={() => run("edit", { id: last.id })}
+              >
+                <span className="lc-before">{from}</span>
+                <ArrowRight size={12} aria-hidden="true" />
+                <span className="lc-after">{to}</span>
+              </button>
+            )}
+            <button
+              className="lc-remember"
+              disabled={busy || !from.trim() || !to.trim() || from === to}
+              onClick={() => run("save", { id: last.id, from, to })}
+            >
+              {t("corrections.rememberPrompt")}
+            </button>
+            <button
+              className="lc-close"
+              aria-label={t("corrections.close")}
+              onClick={() => run("dismiss", { id: last.id })}
+            >
+              <X size={11} aria-hidden="true" />
+            </button>
+          </>
+        )}
+      </main>
+    );
+  }
   return (
     <main
       className={`lc lc-card ${last.editing ? "lc-editor" : "lc-prompt"}`}

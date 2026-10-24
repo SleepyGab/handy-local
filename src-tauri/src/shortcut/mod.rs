@@ -1387,6 +1387,8 @@ pub fn change_app_language_setting(app: AppHandle, language: String) -> Result<(
     let mut settings = settings::get_settings(&app);
     settings.app_language = language.clone();
     settings::write_settings(&app, settings);
+    // The correction overlay is a separate, long-lived webview.
+    let _ = app.emit("app-language-changed", &language);
 
     // Refresh the tray menu with the new language
     tray::update_tray_menu(&app);
