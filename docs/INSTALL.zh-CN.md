@@ -1,6 +1,6 @@
 # Handy Local 简单安装说明
 
-预览版 v0.9.8-local.1，适用于 Apple Silicon Mac（包括 M5、32 GB 内存）。
+预览版 v0.9.8-local.1，适用于 Apple Silicon Mac。
 建议使用较新的 macOS；尚未验证旧版 macOS 和 Intel 机型。
 
 1. 打开 DMG，将 **Handy Local.app** 拖到 **Applications（应用程序）**。
