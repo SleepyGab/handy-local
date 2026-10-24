@@ -5,7 +5,12 @@ Based on Handy v0.9.8 (14f6f0d31cb22a4268acfbddba3052820fd0a06e).
 ## Behavior
 
 - Keep the existing Fn hold/release dictation flow and local Qwen model.
-- After successful paste, show a nonactivating “Correct last dictation” panel.
+- Normal dictation stays silent, including fields without accessibility support.
+- Open “Correct Last Dictation…” from the Handy menu bar icon; the item is enabled
+  only while the recent in-memory dictation is available and recording is idle.
+- Only a detected word edit shows a compact nonactivating suggestion card. The
+  rounded transparent panel shares Handy’s pink palette and light/dark theme.
+  Successful saves dismiss themselves after a short acknowledgement.
 - On macOS, observe only the exact focused accessibility text field captured
   immediately before the paste. Confirm the actual pasted baseline first.
 - Watch for up to 45 seconds, stopping when focus changes, surrounding text

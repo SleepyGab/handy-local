@@ -1,130 +1,240 @@
-/* Scoped so the corrections settings cannot restyle Handy's existing UI. */
-body:has(> #root > .lc) {
+@import "../styles/theme.css";
+
+/* Same palette as Handy's settings and recording overlay. The native window
+   and document stay transparent so the rounded card has no square backing. */
+.correction-window,
+.correction-window body,
+.correction-window #root {
   margin: 0;
-  background: #f7f8fb;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+}
+.correction-window #root {
+  box-sizing: border-box;
+  padding: 8px;
 }
 .lc {
+  --lc-muted: color-mix(
+    in srgb,
+    var(--color-text) 58%,
+    var(--color-background)
+  );
+  --lc-border: color-mix(in srgb, var(--color-mid-gray) 20%, transparent);
+  --lc-tint: color-mix(
+    in srgb,
+    var(--color-logo-primary) 14%,
+    var(--color-background)
+  );
   box-sizing: border-box;
-  padding: 15px 18px;
-  color: #172037;
+  color: var(--color-text);
   font:
     13px/1.45 -apple-system,
     BlinkMacSystemFont,
     sans-serif;
-  background: #f7f8fb;
-  min-height: 100%;
+}
+.lc-card {
+  padding: 13px 14px 12px;
+  border-radius: 18px;
+  background: var(--color-background);
+  border: 1px solid var(--lc-border);
+  box-shadow: 0 3px 8px #00000012;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .lc header {
   display: flex;
-  justify-content: space-between;
+  gap: 8px;
   align-items: center;
+  flex-shrink: 0;
 }
 .lc header strong {
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+}
+.lc-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--lc-tint);
+  color: var(--color-background-ui);
 }
 .lc button {
-  border: 1px solid #ccd1de;
-  border-radius: 7px;
-  padding: 6px 12px;
-  background: white;
-  color: #172037;
+  border: 1px solid var(--lc-border);
+  border-radius: 999px;
+  padding: 5px 13px;
+  min-height: 29px;
+  background: transparent;
+  color: var(--color-text);
   cursor: pointer;
   font: inherit;
+  transition:
+    background-color 0.15s,
+    opacity 0.15s;
+}
+.lc button:hover {
+  background: var(--lc-tint);
 }
 .lc button:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: default;
 }
 .lc button:focus-visible,
 .lc input:focus-visible,
 .lc textarea:focus-visible {
-  outline: 2px solid #6558d4;
+  outline: 2px solid var(--color-background-ui);
   outline-offset: 2px;
 }
 .lc button.lc-primary {
-  background: #5547bb;
-  border-color: #5547bb;
-  color: white;
+  background: var(--color-logo-primary);
+  border-color: transparent;
+  color: var(--light-color-logo-stroke);
+  font-weight: 600;
 }
-.lc .lc-close {
-  border: none;
-  background: transparent;
-  padding: 0 6px;
-  font-size: 19px;
+.lc button.lc-primary:hover {
+  background: color-mix(
+    in srgb,
+    var(--color-logo-primary) 85%,
+    var(--color-background-ui)
+  );
+}
+.lc button.lc-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 3px;
+  min-height: 24px;
+  width: 24px;
+  color: var(--lc-muted);
+}
+.lc button.lc-quiet {
+  border-color: transparent;
+  color: var(--lc-muted);
+  padding-inline: 8px;
+}
+.lc-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
 }
 .lc footer {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-end;
-  margin-top: 9px;
+  flex-shrink: 0;
 }
 .lc-hint {
-  color: #626b80;
-  margin: 8px 0;
+  color: var(--lc-muted);
+  margin: 6px 0 10px;
   font-size: 12px;
 }
 .lc-pair {
   display: flex;
-  gap: 12px;
-  margin: 7px 0;
-  white-space: nowrap;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  min-height: 40px;
+}
+.lc-pair del,
+.lc-pair strong {
+  min-width: 0;
+  max-width: 45%;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.lc-pair del {
+  color: var(--lc-muted);
+  text-decoration-color: var(--color-mid-gray);
+}
+.lc-pair strong {
+  border-radius: 9px;
+  padding: 4px 9px;
+  background: var(--lc-tint);
+}
+.lc-pair svg {
+  flex-shrink: 0;
+  color: var(--lc-muted);
+}
+.lc-editor {
+  padding: 17px 18px 15px;
+  gap: 10px;
+  border-radius: 20px;
 }
 .lc-original {
   width: 100%;
-  height: 85px;
+  height: 72px;
   resize: none;
   box-sizing: border-box;
-  padding: 9px;
-  border: 1px solid #ccd1de;
-  border-radius: 7px;
-  color: #172037;
-  background: white;
+  padding: 10px;
+  border: 1px solid var(--lc-border);
+  border-radius: 12px;
+  color: var(--color-text);
+  background: transparent;
   font: inherit;
 }
 .lc-fields {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 10px;
+  margin: 9px 0;
 }
 .lc-fields label {
   flex: 1;
   min-width: 0;
   font-size: 12px;
+  color: var(--lc-muted);
 }
 .lc-fields input {
   box-sizing: border-box;
   width: 100%;
-  padding: 8px;
+  padding: 8px 10px;
   margin-top: 4px;
-  border: 1px solid #ccd1de;
-  border-radius: 6px;
+  border: 1px solid var(--lc-border);
+  border-radius: 11px;
   font: inherit;
-  background: white;
-  color: #172037;
+  color: var(--color-text);
+  background: transparent;
 }
 .lc-warning {
-  color: #8b4e00;
+  color: var(--color-warning);
   font-size: 12px;
+  margin: 7px 0;
 }
 .lc-message {
-  margin: 7px 0;
-  color: #5547bb;
+  margin: 6px 0;
   font-size: 12px;
+  color: var(--lc-muted);
 }
 .lc-settings {
-  border-radius: 10px;
-  padding: 24px;
+  width: 100%;
+  padding: 8px 4px;
 }
 .lc-settings h2 {
-  font-size: 20px;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 14px;
 }
 .lc-settings h3 {
-  font-size: 15px;
-  font-weight: 650;
+  font-size: 13px;
+  font-weight: 600;
   margin-top: 24px;
+}
+.lc-settings > p {
+  color: var(--lc-muted);
 }
 .lc-toggle {
   display: flex;
@@ -132,38 +242,19 @@ body:has(> #root > .lc) {
   align-items: center;
   margin: 18px 0;
 }
+.lc-toggle input {
+  accent-color: var(--color-background-ui);
+}
 .lc-rule {
   display: flex;
   gap: 15px;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid #dce0e9;
+  border-top: 1px solid var(--lc-border);
   padding: 12px 0;
   overflow-wrap: anywhere;
 }
 .lc-arrow {
   padding: 0 12px;
-  color: #697389;
-}
-@media (prefers-color-scheme: dark) {
-  .lc {
-    background: #20232d;
-    color: #edf0fa;
-  }
-  .lc button,
-  .lc-fields input,
-  .lc-original {
-    background: #2e3342;
-    color: #edf0fa;
-    border-color: #515a71;
-  }
-  .lc-hint {
-    color: #b0b8ce;
-  }
-  .lc-message {
-    color: #b9aeff;
-  }
-  .lc-warning {
-    color: #ffd392;
-  }
+  color: var(--lc-muted);
 }

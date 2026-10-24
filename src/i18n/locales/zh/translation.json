@@ -7,7 +7,8 @@
     "model": "模型",
     "quit": "退出",
     "cancel": "取消",
-    "secureInputWarning": "⚠ 快捷键被 Secure Input 阻止"
+    "secureInputWarning": "⚠ 快捷键被 Secure Input 阻止",
+    "correct_last_dictation": "纠正上一条…"
   },
   "sidebar": {
     "general": "通用",
@@ -754,6 +755,8 @@
     "retention": "仅检测刚才输入的文本框，最长 45 秒，切换焦点即停止。上一条文字仅在内存保留 2 分钟，或到下一次录音开始；仅确认的词条保存到本机。",
     "dictionary": "已记住的词条",
     "empty": "还没有记住的词条。",
-    "delete": "删除"
+    "delete": "删除",
+    "adjust": "调整词条",
+    "menuHint": "转写后 2 分钟内，点击菜单栏 Handy 图标 → 纠正上一条。正常输入不弹窗，仅检测到改字时提示记住。"
   }
 }

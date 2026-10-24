@@ -1,8 +1,13 @@
 import { test, expect, Page } from "@playwright/test";
 
-async function mockCorrections(page: Page, suggestion = false) {
+async function mockCorrections(
+  page: Page,
+  suggestion = false,
+  editing = !suggestion,
+  observing = true,
+) {
   await page.addInitScript(
-    ({ suggestion }) => {
+    ({ suggestion, editing, observing }) => {
       const callbacks = new Map<number, (payload: unknown) => void>();
       let next = 1;
       let listener = 0;
@@ -17,8 +22,8 @@ async function mockCorrections(page: Page, suggestion = false) {
           suggestion: suggestion
             ? { from: "Andromida", to: "Andromeda" }
             : null,
-          observing: true,
-          editing: false,
+          observing,
+          editing,
         },
       };
       const emit = () =>
@@ -76,7 +81,7 @@ async function mockCorrections(page: Page, suggestion = false) {
         value: { unregisterListener() {} },
       });
     },
-    { suggestion },
+    { suggestion, editing, observing },
   );
   await page.setViewportSize({ width: 500, height: 430 });
   await page.goto("/src/corrections/index.html");
@@ -86,7 +91,6 @@ test("editing the last dictation confirms a pair and offers explicit copy fallba
   page,
 }) => {
   await mockCorrections(page);
-  await page.getByRole("button", { name: "纠正上一条" }).click();
   await page.getByLabel("听成了").fill("Andromida");
   await page.getByLabel("应该是").fill("Andromeda");
   await page.getByRole("button", { name: "记住", exact: true }).click();
@@ -107,10 +111,20 @@ test("invalid manual phrase stays editable and is not acknowledged as saved", as
   page,
 }) => {
   await mockCorrections(page);
-  await page.getByRole("button", { name: "纠正上一条" }).click();
   await page.getByLabel("听成了").fill("unrelated");
   await page.getByLabel("应该是").fill("corrected");
   await page.getByRole("button", { name: "记住", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("原文中存在的词");
   await expect(page.getByRole("button", { name: "完成" })).toHaveCount(0);
 });
+
+for (const observing of [true, false]) {
+  test(`ordinary dictation stays silent (accessible field: ${observing})`, async ({
+    page,
+  }) => {
+    await mockCorrections(page, false, false, observing);
+    await expect(page.locator(".lc-card")).toHaveCount(0);
+    await expect(page.getByText("文字已填入")).toHaveCount(0);
+    await expect(page.getByText("这个文本框暂不支持自动检测")).toHaveCount(0);
+  });
+}

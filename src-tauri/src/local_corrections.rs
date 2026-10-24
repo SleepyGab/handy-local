@@ -3,7 +3,10 @@
 use serde::{Deserialize, Serialize};
 use std::{
     path::PathBuf,
-    sync::Mutex,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Mutex,
+    },
     time::{Duration, Instant},
 };
 use tauri::{AppHandle, Emitter, Manager};
@@ -14,6 +17,33 @@ use tauri_nspanel::{
 use tauri_plugin_clipboard_manager::ClipboardExt;
 #[cfg(target_os = "macos")]
 tauri_panel! { panel!(CorrectionPanel { config: { can_become_key_window: true, is_floating_panel: true } }) }
+
+const PROMPT_WIDTH: f64 = 344.0;
+const PROMPT_HEIGHT: f64 = 156.0;
+const EDITOR_WIDTH: f64 = 440.0;
+const EDITOR_HEIGHT: f64 = 360.0;
+static RECENT_DICTATION: AtomicBool = AtomicBool::new(false);
+static POPUP_WANTED: AtomicBool = AtomicBool::new(false);
+
+pub fn can_correct_last() -> bool {
+    RECENT_DICTATION.load(Ordering::Relaxed)
+}
+
+/// The tray and settings page share the same expiry checks and editor action.
+pub fn edit_last_from_tray(app: &AppHandle) {
+    let id = app.try_state::<Corrections>().and_then(|m| {
+        m.0.lock()
+            .ok()
+            .and_then(|s| s.session.as_ref().map(|s| s.id))
+    });
+    if let Some(id) = id {
+        let _ = corrections_action(
+            app.clone(),
+            "edit".into(),
+            serde_json::json!({"id":id}).to_string(),
+        );
+    }
+}
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Rule {
@@ -176,11 +206,17 @@ fn view(state: &State) -> View {
     }
 }
 fn publish(app: &AppHandle, state: &State) {
+    let available = state.dictionary.enabled && state.session.is_some();
+    if RECENT_DICTATION.swap(available, Ordering::Relaxed) != available {
+        crate::tray::update_tray_menu(app);
+    }
     let _ = app.emit("local-corrections-changed", view(state));
 }
 fn popup(app: &AppHandle, show: bool) {
+    POPUP_WANTED.store(show, Ordering::Relaxed);
     let handle = app.clone();
     let _ = app.run_on_main_thread(move || {
+        let show = POPUP_WANTED.load(Ordering::Relaxed);
         #[cfg(target_os = "macos")]
         if let Ok(panel) = handle.get_webview_panel("correction") {
             if show {
@@ -204,8 +240,10 @@ fn position_popup(app: &AppHandle) {
         if let Ok(Some(monitor)) = window.primary_monitor() {
             let area = monitor.work_area();
             let scale = monitor.scale_factor();
-            let x = (area.position.x as f64 + area.size.width as f64 / 2.0) / scale - 250.0;
-            let y = (area.position.y as f64 + area.size.height as f64) / scale - 200.0;
+            let x = (area.position.x as f64 + area.size.width as f64 / 2.0) / scale
+                - PROMPT_WIDTH / 2.0;
+            let y =
+                (area.position.y as f64 + area.size.height as f64) / scale - PROMPT_HEIGHT - 22.0;
             let _ = window.set_position(tauri::LogicalPosition::new(x, y));
         }
     }
@@ -264,12 +302,16 @@ pub fn initialize(app: &AppHandle) {
         if let Ok(panel) = PanelBuilder::<_, CorrectionPanel>::new(app, "correction")
             .url(tauri::WebviewUrl::App("src/corrections/index.html".into()))
             .title("Handy Local")
-            .size(tauri::LogicalSize::new(500.0, 148.0).into())
+            .size(tauri::LogicalSize::new(PROMPT_WIDTH, PROMPT_HEIGHT).into())
             .level(PanelLevel::Floating)
             .no_activate(true)
+            .transparent(true)
+            .has_shadow(false)
+            .corner_radius(18.0)
             .style_mask(StyleMask::empty().borderless().nonactivating_panel())
             .with_window(|w| {
-                w.visible(false)
+                w.transparent(true)
+                    .visible(false)
                     .focused(false)
                     .decorations(false)
                     .resizable(false)
@@ -292,7 +334,8 @@ pub fn initialize(app: &AppHandle) {
         tauri::WebviewUrl::App("src/corrections/index.html".into()),
     )
     .title("Handy Local")
-    .inner_size(500.0, 148.0)
+    .inner_size(PROMPT_WIDTH, PROMPT_HEIGHT)
+    .transparent(true)
     .visible(false)
     .focused(false)
     .decorations(false)
@@ -360,9 +403,7 @@ pub fn initialize(app: &AppHandle) {
         session.suggestion = infer_rule(&session.original, current);
         let show = !session.dismissed && session.suggestion.is_some();
         publish(&app, &state);
-        if show {
-            popup(&app, true);
-        }
+        popup(&app, show);
     });
 }
 
@@ -422,11 +463,12 @@ pub fn begin(app: &AppHandle, text: String, capture: Option<Capture>) {
         editing: false,
     });
     if let Some(w) = app.get_webview_window("correction") {
-        let _ = w.set_size(tauri::LogicalSize::new(500.0, 148.0));
+        let _ = w.set_size(tauri::LogicalSize::new(PROMPT_WIDTH, PROMPT_HEIGHT));
     }
     position_popup(app);
     publish(app, &state);
-    popup(app, true);
+    // Ordinary dictation, including inaccessible text fields, stays silent.
+    popup(app, false);
 }
 pub fn clear(app: &AppHandle) {
     if let Some(manager) = app.try_state::<Corrections>() {
@@ -563,9 +605,13 @@ pub fn corrections_action(
             persist(&mut state, d)?;
         }
         "dismiss" => {
+            if p.id != 0 && state.session.as_ref().is_none_or(|s| s.id != p.id) {
+                return Err("expired".into());
+            }
             if let Some(s) = &mut state.session {
                 s.dismissed = true;
                 s.suggestion = None;
+                s.editing = false;
             }
             popup(&app, false);
         }
@@ -576,8 +622,9 @@ pub fn corrections_action(
             }
             s.observing = false;
             s.editing = true;
+            POPUP_WANTED.store(true, Ordering::Relaxed);
             if let Some(w) = app.get_webview_window("correction") {
-                let _ = w.set_size(tauri::LogicalSize::new(500.0, 430.0));
+                let _ = w.set_size(tauri::LogicalSize::new(EDITOR_WIDTH, EDITOR_HEIGHT));
                 let _ = w.center();
                 let _ = w.show();
                 let _ = w.set_focus();
@@ -648,7 +695,7 @@ pub fn corrections_action(
             }
             if !s.editing {
                 if let Some(w) = app.get_webview_window("correction") {
-                    let _ = w.set_size(tauri::LogicalSize::new(500.0, 200.0));
+                    let _ = w.set_size(tauri::LogicalSize::new(PROMPT_WIDTH, 212.0));
                 }
             }
             s.current = corrected;

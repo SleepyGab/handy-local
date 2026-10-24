@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { Sparkles, X, ArrowRight, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import "./corrections.css";
 
@@ -73,13 +74,22 @@ export function CorrectionPopup() {
       setBusy(false);
     }
   }, []);
-  if (!last)
-    return (
-      <div className="lc">
-        <p>{t("corrections.expired")}</p>
-        <button onClick={() => run("dismiss")}>{t("corrections.close")}</button>
-      </div>
-    );
+  useEffect(() => {
+    if (message !== "saved" && message !== "copied") return;
+    const timer = window.setTimeout(() => {
+      void run("dismiss", { id: last?.id });
+    }, 1600);
+    return () => window.clearTimeout(timer);
+  }, [message, last?.id, run]);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") void run("dismiss", { id: last?.id });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [last?.id, run]);
+  // The hidden webview never renders a routine completion/unavailable notice.
+  if (!last || (!last.editing && !last.suggestion && !message)) return null;
   const saved =
     message === "saved" || message === "saved_copy" || message === "copied";
   const errorKey = [
@@ -94,94 +104,105 @@ export function CorrectionPopup() {
     ? message
     : "error";
   return (
-    <main className="lc" aria-label={t("corrections.title")}>
+    <main
+      className={`lc lc-card ${last.editing ? "lc-editor" : "lc-prompt"}`}
+      aria-label={t("corrections.title")}
+    >
       <header>
+        <span className="lc-mark" aria-hidden="true">
+          {saved ? <Check size={16} /> : <Sparkles size={16} />}
+        </span>
         <strong>
           {t(
             last.editing
               ? "corrections.edit"
               : last.suggestion
                 ? "corrections.prompt"
-                : "corrections.ready",
+                : "corrections.title",
           )}
         </strong>
         <button
           className="lc-close"
           aria-label={t("corrections.close")}
-          onClick={() => run("dismiss")}
+          onClick={() => run("dismiss", { id: last.id })}
         >
-          ×
+          <X size={15} aria-hidden="true" />
         </button>
       </header>
-      {last.editing ? (
-        <>
-          <p className="lc-hint">{t("corrections.selectHint")}</p>
-          <textarea
-            className="lc-original"
-            readOnly
-            value={last.original}
-            aria-label={t("corrections.original")}
-            onSelect={(event) => {
-              const field = event.currentTarget;
-              const selection = field.value.slice(
-                field.selectionStart,
-                field.selectionEnd,
-              );
-              if (selection) {
-                setFrom(selection);
-                setMessage("");
-              }
-            }}
-          />
-          <div className="lc-fields">
-            <label>
-              {t("corrections.from")}
-              <input
-                value={from}
-                maxLength={64}
-                onChange={(e) => {
-                  setFrom(e.target.value);
+      <div className="lc-body">
+        {last.editing ? (
+          <>
+            <p className="lc-hint">{t("corrections.selectHint")}</p>
+            <textarea
+              className="lc-original"
+              readOnly
+              value={last.original}
+              aria-label={t("corrections.original")}
+              onSelect={(event) => {
+                const field = event.currentTarget;
+                const selection = field.value.slice(
+                  field.selectionStart,
+                  field.selectionEnd,
+                );
+                if (selection) {
+                  setFrom(selection);
                   setMessage("");
-                }}
-              />
-            </label>
-            <span>→</span>
-            <label>
-              {t("corrections.to")}
-              <input
-                value={to}
-                maxLength={64}
-                onChange={(e) => {
-                  setTo(e.target.value);
-                  setMessage("");
-                }}
-              />
-            </label>
-          </div>
-          <p className="lc-hint">{t("corrections.exactHint")}</p>
-          {Array.from(from).length === 1 && (
-            <p className="lc-warning">{t("corrections.singleChar")}</p>
-          )}
-        </>
-      ) : last.suggestion ? (
-        <p className="lc-pair">
-          <del>{last.suggestion.from}</del>
-          <span>→</span>
-          <strong>{last.suggestion.to}</strong>
-        </p>
-      ) : (
-        <p className="lc-hint">
-          {t(
-            last.observing ? "corrections.observing" : "corrections.manualHint",
-          )}
-        </p>
-      )}
-      {message && (
-        <p className="lc-message" role="status">
-          {t(`corrections.${errorKey}`)}
-        </p>
-      )}
+                }
+              }}
+            />
+            <div className="lc-fields">
+              <label>
+                {t("corrections.from")}
+                <input
+                  value={from}
+                  maxLength={64}
+                  onChange={(e) => {
+                    setFrom(e.target.value);
+                    setMessage("");
+                  }}
+                />
+              </label>
+              <span>→</span>
+              <label>
+                {t("corrections.to")}
+                <input
+                  value={to}
+                  maxLength={64}
+                  onChange={(e) => {
+                    setTo(e.target.value);
+                    setMessage("");
+                  }}
+                />
+              </label>
+            </div>
+            <p className="lc-hint">{t("corrections.exactHint")}</p>
+            {Array.from(from).length === 1 && (
+              <p className="lc-warning">{t("corrections.singleChar")}</p>
+            )}
+          </>
+        ) : last.suggestion ? (
+          <p className="lc-pair">
+            <del title={last.suggestion.from}>{last.suggestion.from}</del>
+            <ArrowRight size={15} aria-hidden="true" />
+            <strong title={last.suggestion.to}>{last.suggestion.to}</strong>
+          </p>
+        ) : null}
+        {message && (
+          <p className="lc-message" role="status">
+            {t(`corrections.${errorKey}`)}
+          </p>
+        )}
+      </div>
       <footer>
+        {!last.editing && !saved && (
+          <button
+            className="lc-quiet"
+            disabled={busy}
+            onClick={() => run("edit", { id: last.id })}
+          >
+            {t("corrections.adjust")}
+          </button>
+        )}
         {!saved && (last.editing || last.suggestion) && (
           <button
             className="lc-primary"
@@ -189,11 +210,6 @@ export function CorrectionPopup() {
             onClick={() => run("save", { id: last.id, from, to })}
           >
             {t("corrections.remember")}
-          </button>
-        )}
-        {!last.editing && !saved && (
-          <button disabled={busy} onClick={() => run("edit", { id: last.id })}>
-            {t("corrections.edit")}
           </button>
         )}
         {message === "saved_copy" && (
@@ -205,7 +221,7 @@ export function CorrectionPopup() {
           </button>
         )}
         {saved && (
-          <button onClick={() => run("dismiss")}>
+          <button onClick={() => run("dismiss", { id: last.id })}>
             {t("corrections.done")}
           </button>
         )}
@@ -243,6 +259,7 @@ export function CorrectionsSettings() {
       >
         {t("corrections.edit")}
       </button>
+      <p className="lc-hint">{t("corrections.menuHint")}</p>
       <p className="lc-hint">{t("corrections.retention")}</p>
       {(error || state?.storage_error) && (
         <p role="alert">{error || t("corrections.storage")}</p>

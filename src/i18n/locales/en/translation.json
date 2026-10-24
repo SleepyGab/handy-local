@@ -7,7 +7,8 @@
     "model": "Model",
     "quit": "Quit",
     "cancel": "Cancel",
-    "secureInputWarning": "⚠ Shortcuts blocked by Secure Input"
+    "secureInputWarning": "⚠ Shortcuts blocked by Secure Input",
+    "correct_last_dictation": "Correct Last Dictation…"
   },
   "sidebar": {
     "general": "General",
@@ -754,6 +755,8 @@
     "retention": "Only the last dictated field is observed, for up to 45 seconds. Changing focus stops observation. The last dictation is kept in memory for 2 minutes or until the next recording. Only confirmed phrase pairs are saved.",
     "dictionary": "Remembered phrases",
     "empty": "No phrases remembered yet.",
-    "delete": "Delete"
+    "delete": "Delete",
+    "adjust": "Edit phrase",
+    "menuHint": "Use the Handy menu bar icon → Correct Last Dictation within 2 minutes of dictating. Ordinary dictation stays quiet; only detected edits show a suggestion."
   }
 }
