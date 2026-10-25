@@ -182,7 +182,7 @@ fn request_body(text: &str) -> serde_json::Value {
             {"role": "user", "content": format!("<transcript>\n{text}\n</transcript>")}
         ],
         "thinking": {"type": "disabled"},
-        "temperature": 0,
+        "temperature": 1.0,
         "max_tokens": 8192,
         "stream": false
     })
