@@ -355,7 +355,7 @@ pub fn initialize(app: &AppHandle) {
     {
         if let Ok(panel) = PanelBuilder::<_, CorrectionPanel>::new(app, "correction")
             .url(tauri::WebviewUrl::App("src/corrections/index.html".into()))
-            .title("Handy Local")
+            .title(app.package_info().name.clone())
             .size(tauri::LogicalSize::new(PROMPT_WIDTH, PROMPT_HEIGHT).into())
             .level(PanelLevel::Floating)
             .no_activate(true)
@@ -387,7 +387,7 @@ pub fn initialize(app: &AppHandle) {
         "correction",
         tauri::WebviewUrl::App("src/corrections/index.html".into()),
     )
-    .title("Handy Local")
+    .title(app.package_info().name.clone())
     .inner_size(PROMPT_WIDTH, PROMPT_HEIGHT)
     .transparent(true)
     .visible(false)

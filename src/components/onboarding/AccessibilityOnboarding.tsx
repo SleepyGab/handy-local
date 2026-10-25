@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { toast } from "sonner";
 import { usePermissionFlow } from "@/hooks/usePermissionFlow";
-import HandyTextLogo from "../icons/HandyTextLogo";
+import BrandLogo from "../icons/BrandLogo";
 import { Keyboard, Mic, Check, Loader2 } from "lucide-react";
 
 interface AccessibilityOnboardingProps {
@@ -68,7 +68,7 @@ const AccessibilityOnboarding: React.FC<AccessibilityOnboardingProps> = ({
   return (
     <div className="min-h-screen w-full flex flex-col p-6 gap-6 items-center justify-center">
       <div className="flex flex-col items-center gap-2">
-        <HandyTextLogo width={200} />
+        <BrandLogo width={200} />
       </div>
 
       <div className="max-w-md w-full flex flex-col items-center gap-4">

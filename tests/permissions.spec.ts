@@ -57,9 +57,9 @@ test("negative polling times out to recovery controls and notices a later grant"
   await page.clock.fastForward(16000);
   await expect(page.getByText("Waiting...", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("status")).toContainText(
-    "remove the old Handy Local entry",
+    "remove the old nibi entry",
   );
-  await page.getByRole("button", { name: "Restart Handy Local" }).click();
+  await page.getByRole("button", { name: "Restart nibi" }).click();
   expect((await state(page)).calls).toContain("plugin:process|restart");
   await update(page, { accessibility: true });
   await page.clock.fastForward(1000);
@@ -160,6 +160,6 @@ test("Chinese recovery instructions are localized", async ({ page }) => {
   await page.goto("/tests/fixtures/permissions.html?lang=zh&error");
   await expect(page.getByRole("button", { name: "重新检查" })).toBeVisible();
   await expect(page.getByRole("status")).toContainText(
-    "重新添加“应用程序”里的 Handy Local",
+    "重新添加“应用程序”里的 nibi",
   );
 });

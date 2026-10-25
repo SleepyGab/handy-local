@@ -38,7 +38,7 @@ def check(root: Path) -> list[str]:
             return {}
 
     config = document("src-tauri/tauri.corrections.conf.json")
-    require(config.get("productName") == "Handy Local", "App name changed")
+    require(config.get("productName") == "nibi", "App name changed")
     require(
         config.get("identifier") == "com.gabrielle.handylocal",
         "App/data identity changed",
