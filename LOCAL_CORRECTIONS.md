@@ -35,11 +35,37 @@ See the [upstream sync guide](docs/UPSTREAM_SYNC.zh-CN.md) for the preservation 
 - Try to update the original text using its captured accessibility element only
   if its entire value still matches the expected value. Otherwise offer an
   explicit Copy action. Never paste into whichever window happens to be active.
-- The sidebar's Local corrections page can disable the feature or delete rules.
+- The sidebar's Dictionary page combines custom vocabulary and replacement rules.
+  It can add rules without a recent dictation and remove existing rules.
 - Last text and field context live in memory for at most 120 seconds, cleared on
   next recording; only confirmed phrase pairs are written to
   `~/Library/Application Support/com.gabrielle.handylocal/local_corrections.json`
   using an atomic rename and owner-only file permissions.
+
+## Local vocabulary
+
+Dictionary → Custom vocabulary accepts correct spellings without a misspelling.
+Words remain in `settings_store.json` under the existing `custom_words` key;
+there is no migration of replacement pairs. Add, edit, and remove are persisted
+before success is shown. Replacement rules remain separate in
+`local_corrections.json`, and their enable switch does not disable vocabulary.
+The existing JSON transfer controls transfer replacement rules only, as labeled.
+
+Qwen3-ASR receives bounded vocabulary as native system context through a pinned
+local patch of transcribe.cpp 0.2.4 (see `src-tauri/vendor/PATCHES.md`). Whisper
+keeps its native prompt; other engines keep their existing ASCII fuzzy fallback.
+Qwen/Whisper output is not corrected a second time by the fuzzy matcher.
+
+For Qwen with a nonempty vocabulary, a local unprompted pass protects explicitly
+spoken spelling (such as 木头的木 or “spelled ...”); such utterances keep that
+result. Other utterances get a second, prompted pass. A failed/blank hint pass
+keeps the complete baseline, while cancellation still propagates. This adds
+one local decode for most utterances with vocabulary. An empty vocabulary still
+uses a single decode. Hints are not model training and do not guarantee spelling.
+
+Limit: 32 terms, 50 Unicode characters per term, 400 total. Legacy oversized
+lists are preserved, remain removable, and are bounded when building a prompt.
+Vocabulary hints do not make network requests or upload audio.
 
 ## Dictionary transfer
 

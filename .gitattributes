@@ -1,0 +1,2 @@
+# Preserve the upstream source distribution; collapse it in GitHub reviews.
+src-tauri/vendor/** linguist-vendored whitespace=-blank-at-eof

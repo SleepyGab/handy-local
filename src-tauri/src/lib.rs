@@ -26,6 +26,7 @@ mod transcription_coordinator;
 mod tray;
 mod tray_i18n;
 mod utils;
+mod vocabulary;
 
 pub use cli::CliArgs;
 #[cfg(debug_assertions)]

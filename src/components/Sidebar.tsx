@@ -1,6 +1,14 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Cog, FlaskConical, History, Info, Sparkles, Cpu } from "lucide-react";
+import {
+  Cog,
+  FlaskConical,
+  History,
+  Info,
+  Sparkles,
+  Cpu,
+  BookOpen,
+} from "lucide-react";
 import { CorrectionsSettings } from "../corrections/Corrections";
 import HandyTextLogo from "./icons/HandyTextLogo";
 import HandyHand from "./icons/HandyHand";
@@ -40,8 +48,8 @@ export const SECTIONS_CONFIG = {
     enabled: () => true,
   },
   corrections: {
-    labelKey: "corrections.title",
-    icon: Sparkles,
+    labelKey: "dictionary.title",
+    icon: BookOpen,
     component: CorrectionsSettings,
     enabled: () => true,
   },

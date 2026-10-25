@@ -21,8 +21,7 @@ use std::time::{Duration, Instant, SystemTime};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_specta::Event;
 use transcribe_cpp::{
-    Backend, Feature, Model, ModelOptions, RunExtension, RunOptions, Session, StreamOptions, Task,
-    WhisperRunOptions,
+    Backend, Feature, Model, ModelOptions, RunOptions, Session, StreamOptions, Task,
 };
 use transcribe_rs::{
     onnx::{
@@ -1241,18 +1240,7 @@ impl TranscriptionManager {
             );
         }
 
-        // Whether the loaded transcribe-cpp model advertises
-        // Feature::InitialPrompt. Informational (logged below); the whisper
-        // run extension and the fuzzy-correction skip are gated on
-        // `model_is_whisper` instead, since non-whisper archs can advertise
-        // the feature while rejecting the whisper-kind extension.
-        let mut model_takes_initial_prompt = false;
-        // Whether the loaded model is actually whisper-family (arch string).
-        // Non-whisper archs (e.g. Voxtral Small) can advertise
-        // Feature::InitialPrompt yet reject the whisper-kind run extension
-        // with INVALID_ARG, so the whisper extension must be gated on the
-        // arch, not on the feature (see #1601).
-        let mut model_is_whisper = false;
+        let mut custom_words_prompted = false;
 
         // Perform transcription with the appropriate engine.
         // We use catch_unwind to prevent engine panics from poisoning the mutex,
@@ -1292,15 +1280,13 @@ impl TranscriptionManager {
             if let LoadedEngine::TranscribeCpp(session) = &engine {
                 let model = session.model();
                 let caps = model.capabilities();
-                model_takes_initial_prompt = model.supports(Feature::InitialPrompt);
-                model_is_whisper = model.arch() == "whisper";
                 model_supports_translate = caps.supports_translate;
                 model_languages = caps.languages;
                 debug!(
                     "transcribe-cpp model '{}' on '{}': initial_prompt={}, translate={}, languages={:?}",
                     settings.selected_model,
                     model.backend(),
-                    model_takes_initial_prompt,
+                    model.supports(Feature::InitialPrompt),
                     model_supports_translate,
                     model_languages
                 );
@@ -1309,19 +1295,10 @@ impl TranscriptionManager {
             let transcribe_result = catch_unwind(AssertUnwindSafe(|| -> Result<String> {
                 match &mut engine {
                     LoadedEngine::TranscribeCpp(session) => {
-                        // Custom words become the initial prompt ONLY for models
-                        // that accept one (whisper family). Attaching the
-                        // whisper run extension to a non-whisper arch is rejected
-                        // with INVALID_ARG, so skip it there and let the fuzzy
-                        // post-correction handle custom words instead.
-                        let family = if settings.custom_words.is_empty() || !model_is_whisper {
-                            None
-                        } else {
-                            Some(RunExtension::Whisper(WhisperRunOptions {
-                                initial_prompt: Some(settings.custom_words.join(", ")),
-                                ..Default::default()
-                            }))
-                        };
+                        // Qwen's spelling guard may deliberately skip hints;
+                        // its result must still bypass fuzzy replacement.
+                        custom_words_prompted =
+                            matches!(session.model().arch().as_str(), "qwen3_asr" | "whisper");
 
                         let run_plan = transcribe_cpp_run_plan(
                             settings.translate_to_english,
@@ -1336,28 +1313,29 @@ impl TranscriptionManager {
                             task: run_plan.task,
                             language: run_plan.language,
                             target_language: run_plan.target_language,
-                            family,
                             ..Default::default()
                         };
 
                         debug!(
-                            "transcribe-cpp run: task={:?}, language={:?}, initial_prompt={}",
+                            "transcribe-cpp run: task={:?}, language={:?}, vocabulary={}",
                             run_options.task,
                             run_options.language,
-                            run_options.family.is_some()
+                            custom_words_prompted && !settings.custom_words.is_empty()
                         );
 
-                        session
-                            .run(&audio, &run_options)
-                            .map(|t| {
-                                // Whisper's audio-based LID (auto mode only;
-                                // `None` when a language hint was passed).
-                                model_detected_language = t.language;
-                                t.text
-                            })
-                            .map_err(|e| {
-                                anyhow::anyhow!("transcribe-cpp transcription failed: {}", e)
-                            })
+                        crate::vocabulary::transcribe(
+                            session,
+                            &audio,
+                            &run_options,
+                            &settings.custom_words,
+                        )
+                        .map(|t| {
+                            // Whisper's audio-based LID (auto mode only;
+                            // `None` when a language hint was passed).
+                            model_detected_language = t.language;
+                            t.text
+                        })
+                        .map_err(|e| anyhow::anyhow!("transcribe-cpp transcription failed: {}", e))
                     }
                     LoadedEngine::Parakeet(parakeet_engine) => {
                         let params = ParakeetParams {
@@ -1495,15 +1473,12 @@ impl TranscriptionManager {
             (text, output_language, model_languages)
         };
 
-        // Apply fuzzy word correction if custom words are configured — UNLESS the
-        // words were already handed to the model as an initial prompt (whisper
-        // family). We don't pass a prompt to non-whisper models (it requires the
-        // whisper-kind run extension), so they still get fuzzy correction here,
-        // same as the ONNX engines.
+        // Native prompts already guide spelling; do not apply another fuzzy
+        // replacement pass to Qwen3-ASR/Whisper output.
         let filtered_result = post_process_transcription_text(
             result,
             &settings,
-            model_is_whisper,
+            custom_words_prompted,
             &output_language,
             &model_languages,
         );

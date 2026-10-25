@@ -394,6 +394,40 @@
 .lc-settings > p {
   color: var(--lc-muted);
 }
+.lc-vocabulary {
+  border: 1px solid var(--lc-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 18px;
+}
+.lc-settings .lc-vocabulary h3 {
+  margin: 0 0 8px;
+}
+.lc-vocabulary-form,
+.lc-replacement-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+.lc-vocabulary-form label,
+.lc-replacement-form label {
+  display: flex;
+  flex: 1;
+  min-width: 120px;
+  flex-direction: column;
+  gap: 6px;
+}
+.lc-vocabulary-form input,
+.lc-replacement-form input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--lc-border);
+  border-radius: 6px;
+  padding: 8px;
+  background: transparent;
+}
 .lc-toggle {
   display: flex;
   gap: 8px;

@@ -8,7 +8,7 @@ on:
         type: string
   workflow_dispatch:
   pull_request:
-    branches: [handy-local]
+    branches: [handy-local, "codex/**"]
   push:
     branches: [handy-local]
 
@@ -36,7 +36,7 @@ jobs:
       - run: bun run build
       - run: bunx playwright install --with-deps chromium
       - name: Test correction confirmation and dictionary transfer
-        run: bunx playwright test tests/corrections.spec.ts tests/dictionary-transfer.spec.ts --reporter=line
+        run: bunx playwright test tests/corrections.spec.ts tests/vocabulary.spec.ts tests/dictionary-transfer.spec.ts --reporter=line
       - name: Save browser failure evidence
         if: failure()
         uses: actions/upload-artifact@v7
@@ -67,5 +67,7 @@ jobs:
           curl --fail --location --retry 3 --output src-tauri/resources/models/silero_vad_v4.onnx https://blob.handy.computer/silero_vad_v4.onnx
       - name: Test persistence, transfer, matching and local-only restrictions
         run: cargo test --locked --manifest-path src-tauri/Cargo.toml --features local-only local_corrections --lib
+      - name: Test local vocabulary validation and spelling protection
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml --features local-only vocabulary --lib
       - name: Check native integration
         run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --features local-only --lib
