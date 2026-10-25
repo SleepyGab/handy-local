@@ -117,7 +117,15 @@
       "allGranted": "全部完成！",
       "errors": {
         "checkFailed": "檢查權限失敗，請重試",
-        "requestFailed": "請求權限失敗，請重試"
+        "requestFailed": "請求權限失敗，請重試",
+        "restartFailed": "無法自動重新啟動，請結束後重新開啟 Handy Local。"
+      },
+      "recheck": "重新檢查",
+      "restart": "重新啟動 Handy Local",
+      "recovery": {
+        "accessibility": "macOS 尚未授權目前執行的應用程式。如果開關已開啟，請在系統設定中用減號移除舊的 Handy Local 項目，重新加入「應用程式」裡的 Handy Local 並開啟權限，再返回此處或重新啟動 Handy Local。",
+        "microphone": "尚未偵測到麥克風權限。請在系統設定裡檢查麥克風授權，再重新檢查。",
+        "initialization": "權限已獲准，但輸入功能尚未完成初始化。請重新檢查或重新啟動 Handy Local。"
       }
     }
   },

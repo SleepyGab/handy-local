@@ -113,14 +113,14 @@ with redacted debug formatting and owner-only file permissions on Unix.
 export PATH="$HOME/.cargo/bin:$PATH"
 bun install --frozen-lockfile
 # Requires Xcode command line tools, cmake, Rust, Bun and the existing VAD resource.
-CMAKE_POLICY_VERSION_MINIMUM=3.5 bun run tauri build \
-  --config src-tauri/tauri.corrections.conf.json --features local-only --bundles app
+CMAKE_POLICY_VERSION_MINIMUM=3.5 bun run build:local
 ```
 
 Output: `src-tauri/target/release/bundle/macos/Handy Local.app`.
 The original `/Applications/Handy.app` and its app data are separate. The custom
-bundle is ad-hoc signed; macOS may require its own microphone and accessibility
-permissions. Do not run both copies with the Fn binding simultaneously.
+bundle uses a stable certificate identity from the macOS keychain (see
+[signing setup](docs/INSTALL.en.md#local-builds-and-permission-recovery)); macOS
+requires its own microphone and accessibility permissions. Do not run both copies with the Fn binding simultaneously.
 
 ## Validation
 
