@@ -1,0 +1,81 @@
+{"backend":"MTL0","seconds":0.456868833,"type":"load"}
+{"audio_seconds":4.6491875,"hinted":false,"id":"zh01","seconds":0.20163875,"text":"请把合同发给星蓝科技，下周三之前回复。"}
+{"audio_seconds":4.6491875,"hinted":true,"id":"zh01","seconds":0.41254725,"text":"请把合同发给星澜科技，下周三之前回复。"}
+{"audio_seconds":4.9265625,"hinted":true,"id":"zh02","seconds":0.391966625,"text":"我们和知微智联的合作还没有确定，不要对外宣布。"}
+{"audio_seconds":4.9265625,"hinted":false,"id":"zh02","seconds":0.182260625,"text":"我们和智威致联的合作还没有确定，不要对外宣布。"}
+{"audio_seconds":4.0101875,"hinted":false,"id":"zh03","seconds":0.178680583,"text":"慕言科技的预算是三万五，不是五万三。"}
+{"audio_seconds":4.0101875,"hinted":true,"id":"zh03","seconds":0.417739042,"text":"沐言科技的预算是三万五，不是五万三。"}
+{"audio_seconds":4.9880625,"hinted":true,"id":"zh04","seconds":0.423836083,"text":"禾川数科今天下午三点开会，会议改到线上。"}
+{"audio_seconds":4.9880625,"hinted":false,"id":"zh04","seconds":0.205997875,"text":"和川树科今天下午三点开会，会议改到线上。"}
+{"audio_seconds":3.8455625,"hinted":false,"id":"zh05","seconds":0.174868125,"text":"新兰科技和木研科技不是同一家公司。"}
+{"audio_seconds":3.8455625,"hinted":true,"id":"zh05","seconds":0.349058875,"text":"星澜科技和沐言科技不是同一家公司。"}
+{"audio_seconds":4.76525,"hinted":true,"id":"zh06","seconds":0.335302542,"text":"请联系知微智联的采购负责人，先不要签约。"}
+{"audio_seconds":4.76525,"hinted":false,"id":"zh06","seconds":0.161614167,"text":"请联系之微智联的采购负责人，先不要签约。"}
+{"audio_seconds":4.6014375,"hinted":false,"id":"zh07","seconds":0.207846042,"text":"我们公司的名字叫“时光”，“时”取的“时”，光明的“光”。"}
+{"audio_seconds":4.6014375,"hinted":true,"id":"zh07","seconds":0.210237125,"text":"我们公司的名字叫“时光”，“时”取的“时”，光明的“光”。"}
+{"audio_seconds":4.7931875,"hinted":true,"id":"zh08","seconds":0.331055459,"text":"知行公司这个项目制作试点，暂时不扩大范围。"}
+{"audio_seconds":4.7931875,"hinted":false,"id":"zh08","seconds":0.177636416,"text":"知行公司这个项目制作试点，暂时不扩大范围。"}
+{"audio_seconds":5.7264375,"hinted":false,"id":"mx01","seconds":0.2122545,"text":"新兰科技的 A P I 已经 ready 了，但是先不要 deploy。"}
+{"audio_seconds":5.7264375,"hinted":true,"id":"mx01","seconds":0.385203166,"text":"星澜科技的 API 已经 ready 了，但是先不要 deploy。"}
+{"audio_seconds":5.16,"hinted":true,"id":"mx02","seconds":0.356771542,"text":"请把 NovaLoom 的 PR 发给我，review 完再 merge。"}
+{"audio_seconds":5.16,"hinted":false,"id":"mx02","seconds":0.176547916,"text":"请把 Novaloom 的 PR 发给我，review 完再 merge。"}
+{"audio_seconds":3.7194375,"hinted":false,"id":"mx03","seconds":0.146745791,"text":"Luminest, the deadline is Friday, not Thursday."}
+{"audio_seconds":3.7194375,"hinted":true,"id":"mx03","seconds":0.301238542,"text":"LumaNest, the deadline is Friday, not Thursday."}
+{"audio_seconds":4.53775,"hinted":true,"id":"mx04","seconds":0.365248708,"text":"知微智联的 staging 已经更新，production 先别动。"}
+{"audio_seconds":4.53775,"hinted":false,"id":"mx04","seconds":0.180143167,"text":"知微智联的 staging 已经更新，production 先别动。"}
+{"audio_seconds":5.39175,"hinted":false,"id":"mx05","seconds":0.180691083,"text":"慕言科技需要一个demo，先用mock data，不要接真实用户。"}
+{"audio_seconds":5.39175,"hinted":true,"id":"mx05","seconds":0.36564425,"text":"沐言科技需要一个 demo，先用 mock data，不要接真实用户。"}
+{"audio_seconds":5.2550625,"hinted":true,"id":"mx06","seconds":0.354922792,"text":"和参数科的 a t i t 放在 local config 里面。"}
+{"audio_seconds":5.2550625,"hinted":false,"id":"mx06","seconds":0.175320292,"text":"和参数科的 a t i t 放在 local config 里面。"}
+{"audio_seconds":4.1734375,"hinted":false,"id":"mx07","seconds":0.157782334,"text":"Noveloom和Luminest都需要支持中文和English。"}
+{"audio_seconds":4.1734375,"hinted":true,"id":"mx07","seconds":0.325731375,"text":"NovaLoom和LumaNest都需要支持中文和English。"}
+{"audio_seconds":5.380625,"hinted":true,"id":"mx08","seconds":0.354875041,"text":"今天先 review 星澜科技的 proposal，明天再开 kickoff meeting。"}
+{"audio_seconds":5.380625,"hinted":false,"id":"mx08","seconds":0.169983584,"text":"今天先 review 新兰科技的 proposal，明天再开 kickoff meeting。"}
+{"audio_seconds":4.28275,"hinted":false,"id":"no01","seconds":0.138667459,"text":"这段时光过得很快，我很怀念以前的生活。"}
+{"audio_seconds":4.28275,"hinted":true,"id":"no01","seconds":0.276531583,"text":"这段时光过得很快，我很怀念以前的生活。"}
+{"audio_seconds":4.8900625,"hinted":true,"id":"no02","seconds":0.275519209,"text":"旅行留下了很多美好的时光，请保留这些照片。"}
+{"audio_seconds":4.8900625,"hinted":false,"id":"no02","seconds":0.135988792,"text":"旅行留下了很多美好的时光，请保留这些照片。"}
+{"audio_seconds":4.1615625,"hinted":false,"id":"no03","seconds":0.1430945,"text":"请执行这个命令，但不要删除原来的文件。"}
+{"audio_seconds":4.1615625,"hinted":true,"id":"no03","seconds":0.288905209,"text":"请执行这个命令，但不要删除原来的文件。"}
+{"audio_seconds":3.95725,"hinted":true,"id":"no04","seconds":0.262090584,"text":"执行计划之前，我们还需要确认预算。"}
+{"audio_seconds":3.95725,"hinted":false,"id":"no04","seconds":0.12921675,"text":"执行计划之前，我们还需要确认预算。"}
+{"audio_seconds":4.9975,"hinted":false,"id":"no05","seconds":0.155189708,"text":"请把文件夹换成新的蓝色，不用修改里面的内容。"}
+{"audio_seconds":4.9975,"hinted":true,"id":"no05","seconds":0.314611125,"text":"请把文件夹换成新的蓝色，不用修改里面的内容。"}
+{"audio_seconds":5.065875,"hinted":true,"id":"no06","seconds":0.302635125,"text":"我们在研究植物之间的联系，不是在讨论公司的业务。"}
+{"audio_seconds":5.065875,"hinted":false,"id":"no06","seconds":0.150284042,"text":"我们在研究植物之间的联系，不是在讨论公司的业务。"}
+{"audio_seconds":5.0065625,"hinted":false,"id":"no07","seconds":0.149258041,"text":"先把普通的合同发给客户，其他事情明天再说。"}
+{"audio_seconds":5.0065625,"hinted":true,"id":"no07","seconds":0.302338083,"text":"先把普通的合同发给客户，其他事情明天再说。"}
+{"audio_seconds":4.86975,"hinted":true,"id":"no08","seconds":0.320998917,"text":"今天下午三点半开会，预算不能超过三万五。"}
+{"audio_seconds":4.86975,"hinted":false,"id":"no08","seconds":0.167097792,"text":"今天下午三点半开会，预算不能超过三万五。"}
+{"audio_seconds":5.71075,"hinted":false,"id":"no09","seconds":0.19213675,"text":"这个 API 暂时不要 deploy，先在 local 环境测试。"}
+{"audio_seconds":5.71075,"hinted":true,"id":"no09","seconds":0.380280166,"text":"这个 API 暂时不要 deploy，先在 local 环境测试。"}
+{"audio_seconds":2.8773125,"hinted":true,"id":"no10","seconds":0.315358209,"text":"Please leave the new loom in the workshop and close the door."}
+{"audio_seconds":2.8773125,"hinted":false,"id":"no10","seconds":0.155276042,"text":"Please leave the new loom in the workshop and close the door."}
+{"audio_seconds":2.961,"hinted":false,"id":"no11","seconds":0.155680917,"text":"The bird has a nest near the window. Do not move it."}
+{"audio_seconds":2.961,"hinted":true,"id":"no11","seconds":0.315040417,"text":"The bird has a nest near the window. Do not move it."}
+{"audio_seconds":3.9613125,"hinted":true,"id":"no12","seconds":0.334958125,"text":"We should review the PR before Friday, but do not merge it yet."}
+{"audio_seconds":3.9613125,"hinted":false,"id":"no12","seconds":0.167906042,"text":"We should review the PR before Friday, but do not merge it yet."}
+{"audio_seconds":4.594625,"hinted":false,"id":"zh01-tw","seconds":0.162286834,"text":"请把合同发给新兰科技，下周三之前回复。"}
+{"audio_seconds":4.594625,"hinted":true,"id":"zh01-tw","seconds":0.329502458,"text":"请把合同发给星澜科技，下周三之前回复。"}
+{"audio_seconds":3.96725,"hinted":true,"id":"zh03-tw","seconds":0.335719459,"text":"沐言科技的预算是三万五，不是五万三。"}
+{"audio_seconds":3.96725,"hinted":false,"id":"zh03-tw","seconds":0.166675708,"text":"慕言科技的预算是三万五，不是五万三。"}
+{"audio_seconds":5.3020625,"hinted":false,"id":"mx01-tw","seconds":0.181949083,"text":"新蓝科技的 API 已经 ready 了，但是先不要 deploy。"}
+{"audio_seconds":5.3020625,"hinted":true,"id":"mx01-tw","seconds":0.367084417,"text":"星澜科技的 API 已经 ready 了，但是先不要 deploy。"}
+{"audio_seconds":4.3409375,"hinted":true,"id":"no01-tw","seconds":0.282582709,"text":"这段时光过得很快，我很怀念以前的生活。"}
+{"audio_seconds":4.3409375,"hinted":false,"id":"no01-tw","seconds":0.139475666,"text":"这段时光过得很快，我很怀念以前的生活。"}
+{"audio_seconds":4.63525,"hinted":false,"id":"hard01","seconds":0.145174583,"text":"普通的时光也很珍贵，请把这句话原样保留。"}
+{"audio_seconds":4.63525,"hinted":true,"id":"hard01","seconds":0.292259958,"text":"普通的时光也很珍贵，请把这句话原样保留。"}
+{"audio_seconds":4.4698125,"hinted":true,"id":"hard02","seconds":0.182501708,"text":"不是拾取的“拾”，是时间的“时”。公司叫时光。"}
+{"audio_seconds":4.4698125,"hinted":false,"id":"hard02","seconds":0.181710709,"text":"不是拾取的“拾”，是时间的“时”。公司叫时光。"}
+{"audio_seconds":3.992875,"hinted":false,"id":"hard03","seconds":0.169080083,"text":"公司叫木言科技，木头的木，语言的言。"}
+{"audio_seconds":3.992875,"hinted":true,"id":"hard03","seconds":0.167648625,"text":"公司叫木言科技，木头的木，语言的言。"}
+{"audio_seconds":4.283125,"hinted":true,"id":"hard04","seconds":0.180306583,"text":"公司叫新蓝科技，新旧的“新”，蓝色的“蓝”。"}
+{"audio_seconds":4.283125,"hinted":false,"id":"hard04","seconds":0.181768709,"text":"公司叫新蓝科技，新旧的“新”，蓝色的“蓝”。"}
+{"audio_seconds":4.5214375,"hinted":false,"id":"hard05","seconds":0.143767167,"text":"请执行任务，不要暂停，也不要删除文件。"}
+{"audio_seconds":4.5214375,"hinted":true,"id":"hard05","seconds":0.291765042,"text":"请执行任务，不要暂停，也不要删除文件。"}
+{"audio_seconds":3.330125,"hinted":true,"id":"hard06","seconds":0.333344583,"text":"Please send the new loom to the workshop, not to the office."}
+{"audio_seconds":3.330125,"hinted":false,"id":"hard06","seconds":0.166088375,"text":"Please send the new loom to the workshop, not to the office."}
+{"audio_seconds":4.28275,"hinted":false,"id":"hard07","seconds":0.136633042,"text":"这段时光过得很快，我很怀念以前的生活。"}
+{"audio_seconds":4.28275,"hinted":true,"id":"hard07","seconds":0.296906666,"text":"这段时光过得很快，我很怀念以前的生活。"}
+{"audio_seconds":5.7264375,"hinted":true,"id":"hard08","seconds":0.416395834,"text":"星澜科技的 API 已经 ready 了，但是先不要 deploy。"}
+{"audio_seconds":5.7264375,"hinted":false,"id":"hard08","seconds":0.195799625,"text":"新兰科技的 A P I 已经 ready 了，但是先不要 deploy。"}

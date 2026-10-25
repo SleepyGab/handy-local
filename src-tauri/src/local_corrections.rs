@@ -793,6 +793,18 @@ pub fn corrections_action(
                 popup(&app, false);
             }
         }
+        "add" => {
+            let mut d = state.dictionary.clone();
+            if d.rules.iter().any(|rule| rule.from == p.from.trim()) {
+                return Err("duplicateRule".into());
+            }
+            d.rules.push(Rule {
+                from: p.from.trim().into(),
+                to: p.to.trim().into(),
+            });
+            d.rules = transfer::validate_rules(d.rules)?;
+            persist(&mut state, d)?;
+        }
         "delete" => {
             let mut d = state.dictionary.clone();
             d.rules.retain(|r| r.from != p.from);

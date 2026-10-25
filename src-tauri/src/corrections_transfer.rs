@@ -72,7 +72,7 @@ fn parse_file(bytes: &[u8]) -> Result<Vec<Rule>, String> {
     };
     validate_rules(rules)
 }
-fn validate_rules(rules: Vec<Rule>) -> Result<Vec<Rule>, String> {
+pub(super) fn validate_rules(rules: Vec<Rule>) -> Result<Vec<Rule>, String> {
     if rules.len() > MAX_RULES {
         return Err("fileLimit".into());
     }

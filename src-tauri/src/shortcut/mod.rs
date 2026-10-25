@@ -880,9 +880,35 @@ pub fn change_whats_new_last_seen_version_setting(
 #[tauri::command]
 #[specta::specta]
 pub fn update_custom_words(app: AppHandle, words: Vec<String>) -> Result<(), String> {
+    use tauri_plugin_store::StoreExt;
     let mut settings = settings::get_settings(&app);
-    settings.custom_words = words;
-    settings::write_settings(&app, settings);
+    // An old list may exceed the new prompt budget. Always allow removing its
+    // entries; adding/editing still has to satisfy the current limits.
+    let deleting_only = words.len() < settings.custom_words.len()
+        && words
+            .iter()
+            .all(|word| settings.custom_words.contains(word));
+    settings.custom_words = match crate::vocabulary::validate_words(words.clone()) {
+        Ok(words) => words,
+        Err(_) if deleting_only => words,
+        Err(error) => return Err(error.into()),
+    };
+    let store = app
+        .store(crate::portable::store_path(settings::SETTINGS_STORE_PATH))
+        .map_err(|_| "storage")?;
+    let previous = store.get("settings");
+    store.set(
+        "settings",
+        serde_json::to_value(settings).map_err(|_| "storage")?,
+    );
+    if store.save().is_err() {
+        if let Some(previous) = previous {
+            store.set("settings", previous);
+        } else {
+            store.delete("settings");
+        }
+        return Err("storage".into());
+    }
     Ok(())
 }
 

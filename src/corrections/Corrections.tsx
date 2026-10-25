@@ -4,6 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 import { Sparkles, X, ArrowRight, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import "./corrections.css";
+import { Vocabulary } from "./Vocabulary";
 import { DictionaryTransfer } from "./DictionaryTransfer";
 
 type Rule = { from: string; to: string };
@@ -287,22 +288,42 @@ export function CorrectionsSettings() {
   const { t } = useTranslation();
   const state = useCorrections();
   const [error, setError] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [busy, setBusy] = useState(false);
   const run = async (name: string, payload: object) => {
+    setBusy(true);
     try {
       await action(name, payload);
       setError("");
-    } catch {
-      setError(t("corrections.error"));
+      if (name === "add") {
+        setFrom("");
+        setTo("");
+      }
+    } catch (cause) {
+      setError(
+        t(
+          String(cause) === "duplicateRule"
+            ? "dictionary.duplicateRule"
+            : "corrections.error",
+        ),
+      );
+    } finally {
+      setBusy(false);
     }
   };
   return (
     <section className="lc lc-settings">
-      <h2>{t("corrections.title")}</h2>
-      <p>{t("corrections.privacy")}</p>
+      <h2>{t("dictionary.title")}</h2>
+      <p>{t("dictionary.privacy")}</p>
+      <Vocabulary />
+      <h3>{t("dictionary.replacements")}</h3>
+      <p className="lc-hint">{t("dictionary.replacementsHint")}</p>
       <label className="lc-toggle">
         <input
           type="checkbox"
           checked={state?.enabled ?? false}
+          disabled={busy || !state}
           onChange={(e) => run("toggle", { enabled: e.target.checked })}
         />
         {t("corrections.enabled")}
@@ -318,7 +339,46 @@ export function CorrectionsSettings() {
       {(error || state?.storage_error) && (
         <p role="alert">{error || t("corrections.storage")}</p>
       )}
-      <DictionaryTransfer disabled={!state || !!state.storage_error} />
+      <form
+        className="lc-replacement-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void run("add", { from: from.trim(), to: to.trim() });
+        }}
+      >
+        <label>
+          {t("corrections.from")}
+          <input
+            value={from}
+            maxLength={64}
+            disabled={busy || !state}
+            onChange={(event) => setFrom(event.target.value)}
+          />
+        </label>
+        <span aria-hidden="true">→</span>
+        <label>
+          {t("corrections.to")}
+          <input
+            value={to}
+            maxLength={64}
+            disabled={busy || !state}
+            onChange={(event) => setTo(event.target.value)}
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={
+            busy ||
+            !state ||
+            !from.trim() ||
+            !to.trim() ||
+            from.trim() === to.trim()
+          }
+        >
+          {t("dictionary.addRule")}
+        </button>
+      </form>
+      <DictionaryTransfer disabled={busy || !state || !!state.storage_error} />
       <p className="lc-hint">{t("corrections.exactHint")}</p>
       {!state?.rules.length && <p>{t("corrections.empty")}</p>}
       {state?.rules.map((rule) => (
@@ -328,7 +388,10 @@ export function CorrectionsSettings() {
             <span className="lc-arrow">→</span>
             <strong>{rule.to}</strong>
           </span>
-          <button onClick={() => run("delete", { from: rule.from })}>
+          <button
+            disabled={busy}
+            onClick={() => run("delete", { from: rule.from })}
+          >
             {t("corrections.delete")}
           </button>
         </div>
