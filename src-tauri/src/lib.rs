@@ -8,6 +8,7 @@ mod catalog;
 mod chinese_script;
 pub mod cli;
 mod clipboard;
+mod cloud_polish;
 mod commands;
 mod helpers;
 mod input;
@@ -655,6 +656,11 @@ pub fn run(cli_args: CliArgs) {
 
     let specta_builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
+            cloud_polish::cloud_polish_status,
+            cloud_polish::reveal_cloud_polish_key,
+            cloud_polish::set_cloud_polish_enabled,
+            cloud_polish::set_cloud_polish_key,
+            cloud_polish::clear_last_cloud_polish,
             local_corrections::corrections_state,
             local_corrections::corrections_action,
             local_corrections::transfer::corrections_transfer,
@@ -799,6 +805,7 @@ pub fn run(cli_args: CliArgs) {
 
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()
+        .manage(cloud_polish::CloudPolishState::default())
         .device_event_filter(tauri::DeviceEventFilter::Always)
         .plugin(tauri_plugin_dialog::init())
         .plugin(
