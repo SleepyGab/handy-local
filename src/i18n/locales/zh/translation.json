@@ -1,4 +1,7 @@
 {
+  "app": {
+    "name": "nibi"
+  },
   "tray": {
     "settings": "设置...",
     "checkUpdates": "检查更新...",
@@ -102,7 +105,7 @@
     },
     "permissions": {
       "title": "需要权限",
-      "description": "Handy 需要一些权限才能正常工作。",
+      "description": "nibi 需要一些权限才能正常工作。",
       "microphone": {
         "title": "麦克风访问",
         "description": "需要听取您的语音进行转录。"
@@ -118,14 +121,14 @@
       "errors": {
         "checkFailed": "检查权限失败。请重试。",
         "requestFailed": "请求权限失败。请重试。",
-        "restartFailed": "无法自动重启，请退出后重新打开 Handy Local。"
+        "restartFailed": "无法自动重启，请退出后重新打开 nibi。"
       },
       "recheck": "重新检查",
-      "restart": "重启 Handy Local",
+      "restart": "重启 nibi",
       "recovery": {
-        "accessibility": "macOS 尚未授权当前运行的应用。如果开关已经开启，请在系统设置里用减号移除旧的 Handy Local 条目，重新添加“应用程序”里的 Handy Local 并开启权限，再返回这里或重启 Handy Local。",
+        "accessibility": "macOS 尚未授权当前运行的应用。如果开关已经开启，请在系统设置里用减号移除旧的 nibi 条目，重新添加“应用程序”里的 nibi 并开启权限，再返回这里或重启 nibi。",
         "microphone": "尚未检测到麦克风权限。请在系统设置里检查麦克风授权，然后重新检查。",
-        "initialization": "权限已获准，但输入功能尚未初始化完成。请重新检查或重启 Handy Local。"
+        "initialization": "权限已获准，但输入功能尚未初始化完成。请重新检查或重启 nibi。"
       }
     }
   },
@@ -184,13 +187,13 @@
       "searchPlaceholder": "按名称搜索模型…",
       "rescan": {
         "label": "重新扫描",
-        "tooltip": "重新扫描在 Handy 之外添加到模型文件夹或 Hugging Face 缓存中的模型"
+        "tooltip": "重新扫描在 nibi 之外添加到模型文件夹或 Hugging Face 缓存中的模型"
       }
     },
     "general": {
       "title": "通用",
       "shortcut": {
-        "title": "Handy 快捷键",
+        "title": "nibi 快捷键",
         "description": "配置启动语音转文字录制的键盘快捷键",
         "loading": "加载快捷键中...",
         "none": "未配置快捷键",
@@ -302,11 +305,11 @@
       },
       "autostart": {
         "label": "开机启动",
-        "description": "登录计算机时自动启动 Handy。"
+        "description": "登录计算机时自动启动 nibi。"
       },
       "showTrayIcon": {
         "label": "显示托盘图标",
-        "description": "在系统托盘中显示 Handy 图标。"
+        "description": "在系统托盘中显示 nibi 图标。"
       },
       "overlay": {
         "style": {
@@ -511,7 +514,7 @@
       },
       "updateChecks": {
         "label": "检查更新",
-        "description": "自动检查 Handy 的新版本",
+        "description": "自动检查 nibi 的新版本",
         "lockedDescription": "已被系统配置禁用 (HANDY_DISABLE_UPDATER)"
       },
       "soundTheme": {
@@ -589,7 +592,7 @@
       },
       "keyboardDiagnostic": {
         "title": "键盘诊断",
-        "description": "检查键盘事件是否能到达 Handy。仅记录事件数量，绝不记录您按了哪些键。",
+        "description": "检查键盘事件是否能到达 nibi。仅记录事件数量，绝不记录您按了哪些键。",
         "run": "运行 10 秒诊断",
         "running": "正在监听… 请按几次您的快捷键（例如 Option+Space）",
         "secureInputLabel": "Secure Input",
@@ -603,7 +606,7 @@
         "mouse": "鼠标",
         "verdictBlocked": "Secure Input 正在阻止按键事件——在问题解决前，包含普通按键的快捷键无法工作。",
         "verdictSuspicious": "收到了修饰键事件，但没有按键事件——尽管 Secure Input 报告为已禁用，仍有程序在抑制按键。请在 GitHub 上反馈此问题。",
-        "verdictOk": "按键事件正常到达 Handy。",
+        "verdictOk": "按键事件正常到达 nibi。",
         "verdictNoEvents": "未捕获到任何事件——测试期间您按过键吗？",
         "failed": "诊断失败：{{error}}"
       },
@@ -626,11 +629,11 @@
       "title": "关于",
       "version": {
         "title": "版本",
-        "description": "Handy 的当前版本"
+        "description": "nibi 的当前版本"
       },
       "appDataDirectory": {
         "title": "应用数据目录",
-        "description": "Handy 存储数据的位置"
+        "description": "nibi 存储数据的位置"
       },
       "sourceCode": {
         "title": "源代码",
@@ -647,12 +650,12 @@
         "ggml": {
           "title": "ggml",
           "description": "OpenAI Whisper 自动语音识别模型的高性能推理",
-          "details": "Handy 使用 ggml 进行快速的本地语音转文字处理。感谢 Georgi Gerganov 和贡献者们的出色工作。"
+          "details": "nibi 使用 ggml 进行快速的本地语音转文字处理。感谢 Georgi Gerganov 和贡献者们的出色工作。"
         }
       },
       "whatsNewUpdates": {
         "label": "显示新功能",
-        "description": "Handy 更新后显示发行说明"
+        "description": "nibi 更新后显示发行说明"
       }
     }
   },
@@ -681,7 +684,7 @@
     "noOptionsFound": "未找到选项"
   },
   "accessibility": {
-    "permissionsDescription": "Handy 需要辅助功能权限才能输入转录的文字。",
+    "permissionsDescription": "nibi 需要辅助功能权限才能输入转录的文字。",
     "openSettings": "打开系统设置"
   },
   "errors": {
@@ -704,11 +707,11 @@
   },
   "appLanguage": {
     "title": "应用语言",
-    "description": "更改 Handy 界面的语言"
+    "description": "更改 nibi 界面的语言"
   },
   "theme": {
     "title": "应用主题",
-    "description": "选择 Handy 跟随系统主题，还是保持浅色或深色",
+    "description": "选择 nibi 跟随系统主题，还是保持浅色或深色",
     "options": {
       "system": "跟随系统",
       "light": "浅色",
@@ -720,7 +723,7 @@
     "processing": "处理中..."
   },
   "whatsNew": {
-    "title": "Handy v{{version}} 新功能"
+    "title": "nibi v{{version}} 新功能"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} 可能正在阻止 1 个快捷键",
@@ -745,7 +748,7 @@
     "to": "应该是",
     "exactHint": "确认后的词条会在今后所有应用的转写中精确替换；英文区分大小写。删除词条即可撤销记忆。",
     "singleChar": "单字规则可能影响其他词，建议选中完整人名或词组。",
-    "observing": "直接在原文本框改字，Handy 会短暂检测，并在记住前征求确认。",
+    "observing": "直接在原文本框改字，nibi 会短暂检测，并在记住前征求确认。",
     "manualHint": "这个文本框暂不支持自动检测，可以点击“纠正上一条”。",
     "remember": "记住",
     "copy": "复制修正后的文字",
@@ -765,7 +768,7 @@
     "empty": "还没有记住的词条。",
     "delete": "删除",
     "adjust": "调整词条",
-    "menuHint": "转写后 2 分钟内，点击菜单栏 Handy 图标 → 纠正上一条。正常输入不弹窗，仅检测到改字时提示记住。",
+    "menuHint": "转写后 2 分钟内，点击菜单栏 nibi 图标 → 纠正上一条。正常输入不弹窗，仅检测到改字时提示记住。",
     "rememberPrompt": "记住？",
     "remembered": "已记住",
     "exportDictionary": "导出词典",
@@ -784,7 +787,7 @@
     "confirmImport": "确认导入",
     "exported": "已导出 {{count}} 条纠正词条。",
     "imported": "导入完成：新增 {{added}} 条，替换 {{replaced}} 条，跳过 {{skipped}} 条。",
-    "invalidFile": "这不是有效的 Handy Local 词典，未导入任何词条。",
+    "invalidFile": "这不是有效的 nibi 词典，未导入任何词条。",
     "unsupportedFile": "暂不支持这个词典格式或版本。",
     "ambiguousFile": "文件中同一个错词对应多个不同改法，请先整理重复词条。",
     "fileLimit": "词典最多支持 10,000 条词条，单个文件不超过 8 MB。",
@@ -795,33 +798,6 @@
     "backupFailed": "无法备份当前词典，未导入任何词条。",
     "transferBusy": "另一个词典导入或导出操作正在进行。",
     "transferError": "词典操作未完成，已有纠正词条未被替换。"
-  },
-  "dictionary": {
-    "title": "词典",
-    "privacy": "词汇提示和替换规则保存在本机，并在本地执行。开启云端润色时，处理后的转写文字会发送给 DeepSeek。",
-    "vocabulary": "自定义词汇",
-    "description": "直接添加名称或术语的正确写法。Qwen3-ASR 和 Whisper 会在本地识别时参考这些词；其他模型仅支持英文词的近似纠错。词汇提示可帮助识别，但不保证每次正确。",
-    "word": "词语或短语",
-    "placeholder": "例如：星澜科技、NovaLoom",
-    "add": "添加词汇",
-    "save": "保存词汇",
-    "cancel": "取消",
-    "edit": "编辑",
-    "editWord": "编辑 {{word}}",
-    "removeWord": "移除 {{word}}",
-    "limit": "已添加 {{count}} / 32 个词 · 每个最多 50 字，合计最多 400 字",
-    "empty": "还没有自定义词汇。只需填写正确写法，无需输入错误词。",
-    "loadError": "无法读取词汇，请重新打开此页面重试。",
-    "saveError": "保存失败，原有词汇未更改。",
-    "invalidWord": "请输入 1–50 字的词语，不支持控制字符和尖括号。",
-    "duplicate": "这个词已经在词典里了。",
-    "wordLimit": "最多添加 32 个词，合计不超过 400 字。",
-    "saved": "词汇已保存，下次转写时生效。",
-    "removed": "词汇已移除，不再作为识别提示。",
-    "replacements": "替换规则",
-    "replacementsHint": "识别完成后，将已知的错误词替换为指定写法。这些规则与上面的词汇提示分别生效。",
-    "addRule": "添加规则",
-    "duplicateRule": "这个错误词已有替换规则，请先移除旧规则再添加。"
   },
   "cloudPolish": {
     "title": "文字润色",
@@ -862,5 +838,32 @@
     "hideKey": "隐藏 key",
     "savedKeyHelp": "本机只保存一个 DeepSeek key。保存新 key 会替换旧 key；移除会清除已保存的 key，并关闭润色。",
     "revealError": "无法显示已保存的 key，请重试。"
+  },
+  "dictionary": {
+    "title": "词典",
+    "privacy": "词汇提示和替换规则保存在本机，并在本地执行。开启云端润色时，处理后的转写文字会发送给 DeepSeek。",
+    "vocabulary": "自定义词汇",
+    "description": "直接添加名称或术语的正确写法。Qwen3-ASR 和 Whisper 会在本地识别时参考这些词；其他模型仅支持英文词的近似纠错。词汇提示可帮助识别，但不保证每次正确。",
+    "word": "词语或短语",
+    "placeholder": "例如：星澜科技、NovaLoom",
+    "add": "添加词汇",
+    "save": "保存词汇",
+    "cancel": "取消",
+    "edit": "编辑",
+    "editWord": "编辑 {{word}}",
+    "removeWord": "移除 {{word}}",
+    "limit": "已添加 {{count}} / 32 个词 · 每个最多 50 字，合计最多 400 字",
+    "empty": "还没有自定义词汇。只需填写正确写法，无需输入错误词。",
+    "loadError": "无法读取词汇，请重新打开此页面重试。",
+    "saveError": "保存失败，原有词汇未更改。",
+    "invalidWord": "请输入 1–50 字的词语，不支持控制字符和尖括号。",
+    "duplicate": "这个词已经在词典里了。",
+    "wordLimit": "最多添加 32 个词，合计不超过 400 字。",
+    "saved": "词汇已保存，下次转写时生效。",
+    "removed": "词汇已移除，不再作为识别提示。",
+    "replacements": "替换规则",
+    "replacementsHint": "识别完成后，将已知的错误词替换为指定写法。这些规则与上面的词汇提示分别生效。",
+    "addRule": "添加规则",
+    "duplicateRule": "这个错误词已有替换规则，请先移除旧规则再添加。"
   }
 }

@@ -1,4 +1,7 @@
 {
+  "app": {
+    "name": "nibi"
+  },
   "tray": {
     "settings": "設定...",
     "checkUpdates": "檢查更新...",
@@ -102,7 +105,7 @@
     },
     "permissions": {
       "title": "需要權限",
-      "description": "Handy 需要一些權限才能正常運作",
+      "description": "nibi 需要一些權限才能正常運作",
       "microphone": {
         "title": "麥克風存取",
         "description": "需要聽取您的語音進行轉錄"
@@ -118,14 +121,14 @@
       "errors": {
         "checkFailed": "檢查權限失敗，請重試",
         "requestFailed": "請求權限失敗，請重試",
-        "restartFailed": "無法自動重新啟動，請結束後重新開啟 Handy Local。"
+        "restartFailed": "無法自動重新啟動，請結束後重新開啟 nibi。"
       },
       "recheck": "重新檢查",
-      "restart": "重新啟動 Handy Local",
+      "restart": "重新啟動 nibi",
       "recovery": {
-        "accessibility": "macOS 尚未授權目前執行的應用程式。如果開關已開啟，請在系統設定中用減號移除舊的 Handy Local 項目，重新加入「應用程式」裡的 Handy Local 並開啟權限，再返回此處或重新啟動 Handy Local。",
+        "accessibility": "macOS 尚未授權目前執行的應用程式。如果開關已開啟，請在系統設定中用減號移除舊的 nibi 項目，重新加入「應用程式」裡的 nibi 並開啟權限，再返回此處或重新啟動 nibi。",
         "microphone": "尚未偵測到麥克風權限。請在系統設定裡檢查麥克風授權，再重新檢查。",
-        "initialization": "權限已獲准，但輸入功能尚未完成初始化。請重新檢查或重新啟動 Handy Local。"
+        "initialization": "權限已獲准，但輸入功能尚未完成初始化。請重新檢查或重新啟動 nibi。"
       }
     }
   },
@@ -170,7 +173,7 @@
     "general": {
       "title": "一般",
       "shortcut": {
-        "title": "Handy 快捷鍵",
+        "title": "nibi 快捷鍵",
         "description": "設定啟動語音轉文字錄製的鍵盤快捷鍵",
         "loading": "載入快捷鍵中...",
         "none": "未設定快捷鍵",
@@ -235,7 +238,7 @@
       "searchPlaceholder": "依名稱搜尋模型…",
       "rescan": {
         "label": "重新掃描",
-        "tooltip": "重新掃描在 Handy 之外新增到模型資料夾或 Hugging Face 快取中的模型"
+        "tooltip": "重新掃描在 nibi 之外新增到模型資料夾或 Hugging Face 快取中的模型"
       }
     },
     "sound": {
@@ -302,11 +305,11 @@
       },
       "autostart": {
         "label": "開機啟動",
-        "description": "登入電腦時自動啟動 Handy"
+        "description": "登入電腦時自動啟動 nibi"
       },
       "showTrayIcon": {
         "label": "顯示系統匣圖示",
-        "description": "在系統匣中顯示 Handy 圖示"
+        "description": "在系統匣中顯示 nibi 圖示"
       },
       "overlay": {
         "style": {
@@ -511,7 +514,7 @@
       },
       "updateChecks": {
         "label": "檢查更新",
-        "description": "自動檢查 Handy 的新版本",
+        "description": "自動檢查 nibi 的新版本",
         "lockedDescription": "已被系統設定停用 (HANDY_DISABLE_UPDATER)"
       },
       "soundTheme": {
@@ -589,7 +592,7 @@
       },
       "keyboardDiagnostic": {
         "title": "鍵盤診斷",
-        "description": "檢查鍵盤事件是否能送達 Handy。只會記錄事件數量，絕不記錄您按了哪些按鍵。",
+        "description": "檢查鍵盤事件是否能送達 nibi。只會記錄事件數量，絕不記錄您按了哪些按鍵。",
         "run": "執行 10 秒診斷",
         "running": "正在監聽… 請按幾次您的快捷鍵（例如 Option+Space）",
         "secureInputLabel": "Secure Input",
@@ -603,7 +606,7 @@
         "mouse": "滑鼠",
         "verdictBlocked": "Secure Input 正在阻擋按鍵事件——在問題解決前，包含一般按鍵的快捷鍵無法運作。",
         "verdictSuspicious": "收到了修飾鍵事件，但沒有按鍵事件——即使 Secure Input 回報為已停用，仍有程式在抑制按鍵。請在 GitHub 上回報此問題。",
-        "verdictOk": "按鍵事件正常送達 Handy。",
+        "verdictOk": "按鍵事件正常送達 nibi。",
         "verdictNoEvents": "未擷取到任何事件——測試期間您有按鍵嗎？",
         "failed": "診斷失敗：{{error}}"
       },
@@ -626,11 +629,11 @@
       "title": "關於",
       "version": {
         "title": "版本",
-        "description": "Handy 的目前版本"
+        "description": "nibi 的目前版本"
       },
       "appDataDirectory": {
         "title": "應用程式資料目錄",
-        "description": "Handy 儲存資料的位置"
+        "description": "nibi 儲存資料的位置"
       },
       "sourceCode": {
         "title": "原始碼",
@@ -647,12 +650,12 @@
         "ggml": {
           "title": "ggml",
           "description": "針對 OpenAI Whisper 自動語音辨識模型的高效能推理引擎",
-          "details": "Handy 使用 ggml 進行快速的本機語音轉文字處理。感謝 Georgi Gerganov 和貢獻者們的傑出工作"
+          "details": "nibi 使用 ggml 進行快速的本機語音轉文字處理。感謝 Georgi Gerganov 和貢獻者們的傑出工作"
         }
       },
       "whatsNewUpdates": {
         "label": "顯示新功能",
-        "description": "Handy 更新後顯示版本資訊"
+        "description": "nibi 更新後顯示版本資訊"
       }
     }
   },
@@ -681,7 +684,7 @@
     "noOptionsFound": "未找到選項"
   },
   "accessibility": {
-    "permissionsDescription": "Handy 需要輔助使用權限才能輸入轉錄的文字",
+    "permissionsDescription": "nibi 需要輔助使用權限才能輸入轉錄的文字",
     "openSettings": "開啟系統設定"
   },
   "errors": {
@@ -704,11 +707,11 @@
   },
   "appLanguage": {
     "title": "應用程式語言",
-    "description": "變更 Handy 介面的語言"
+    "description": "變更 nibi 介面的語言"
   },
   "theme": {
     "title": "應用程式主題",
-    "description": "選擇 Handy 跟隨系統主題，或維持淺色或深色",
+    "description": "選擇 nibi 跟隨系統主題，或維持淺色或深色",
     "options": {
       "system": "跟隨系統",
       "light": "淺色",
@@ -720,7 +723,7 @@
     "processing": "處理中..."
   },
   "whatsNew": {
-    "title": "Handy v{{version}} 新功能"
+    "title": "nibi v{{version}} 新功能"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} 可能正在阻擋 1 個快捷鍵",
@@ -745,7 +748,7 @@
     "to": "应该是",
     "exactHint": "确认后的词条会在今后所有应用的转写中精确替换；英文区分大小写。删除词条即可撤销记忆。",
     "singleChar": "单字规则可能影响其他词，建议选中完整人名或词组。",
-    "observing": "直接在原文本框改字，Handy 会短暂检测，并在记住前征求确认。",
+    "observing": "直接在原文本框改字，nibi 会短暂检测，并在记住前征求确认。",
     "manualHint": "这个文本框暂不支持自动检测，可以点击“纠正上一条”。",
     "remember": "记住",
     "copy": "复制修正后的文字",
@@ -765,7 +768,7 @@
     "empty": "还没有记住的词条。",
     "delete": "删除",
     "adjust": "調整詞條",
-    "menuHint": "轉寫後 2 分鐘內，點擊選單列 Handy 圖示 → 修正上一段。正常輸入不彈窗，僅偵測到改字時提示記住。",
+    "menuHint": "轉寫後 2 分鐘內，點擊選單列 nibi 圖示 → 修正上一段。正常輸入不彈窗，僅偵測到改字時提示記住。",
     "rememberPrompt": "記住？",
     "remembered": "已記住",
     "exportDictionary": "匯出詞典",
@@ -784,7 +787,7 @@
     "confirmImport": "確認匯入",
     "exported": "已匯出 {{count}} 條修正詞條。",
     "imported": "匯入完成：新增 {{added}} 條，取代 {{replaced}} 條，略過 {{skipped}} 條。",
-    "invalidFile": "這不是有效的 Handy Local 詞典，未匯入任何詞條。",
+    "invalidFile": "這不是有效的 nibi 詞典，未匯入任何詞條。",
     "unsupportedFile": "目前不支援這個詞典格式或版本。",
     "ambiguousFile": "檔案中同一個錯詞有多個不同改法，請先整理重複詞條。",
     "fileLimit": "詞典最多支援 10,000 條詞條，單一檔案不超過 8 MB。",
@@ -795,33 +798,6 @@
     "backupFailed": "無法備份目前的詞典，未匯入任何詞條。",
     "transferBusy": "另一個詞典匯入或匯出操作正在進行。",
     "transferError": "詞典操作未完成，既有修正詞條未被取代。"
-  },
-  "dictionary": {
-    "title": "詞典",
-    "privacy": "詞彙提示和替換規則儲存在本機，並在本機執行。開啟雲端潤飾時，處理後的轉寫文字會傳送給 DeepSeek。",
-    "vocabulary": "自訂詞彙",
-    "description": "直接新增名稱或術語的正確寫法。Qwen3-ASR 和 Whisper 會在本機辨識時參考這些詞；其他模型僅支援英文詞的近似更正。詞彙提示可協助辨識，但不保證每次正確。",
-    "word": "詞語或短語",
-    "placeholder": "例如：星瀾科技、NovaLoom",
-    "add": "新增詞彙",
-    "save": "儲存詞彙",
-    "cancel": "取消",
-    "edit": "編輯",
-    "editWord": "編輯 {{word}}",
-    "removeWord": "移除 {{word}}",
-    "limit": "已新增 {{count}} / 32 個詞 · 每個最多 50 字，合計最多 400 字",
-    "empty": "還沒有自訂詞彙。只需填寫正確寫法，無需輸入錯誤詞。",
-    "loadError": "無法讀取詞彙，請重新開啟此頁面再試。",
-    "saveError": "儲存失敗，原有詞彙未更改。",
-    "invalidWord": "請輸入 1–50 字的詞語，不支援控制字元和角括號。",
-    "duplicate": "這個詞已經在詞典裡了。",
-    "wordLimit": "最多新增 32 個詞，合計不超過 400 字。",
-    "saved": "詞彙已儲存，下次轉寫時生效。",
-    "removed": "詞彙已移除，不再作為辨識提示。",
-    "replacements": "替換規則",
-    "replacementsHint": "辨識完成後，將已知的錯誤詞替換為指定寫法。這些規則與上面的詞彙提示分別生效。",
-    "addRule": "新增規則",
-    "duplicateRule": "這個錯誤詞已有替換規則，請先移除舊規則再新增。"
   },
   "cloudPolish": {
     "title": "文字潤飾",
@@ -862,5 +838,32 @@
     "hideKey": "隱藏 key",
     "savedKeyHelp": "此裝置只儲存一個 DeepSeek key。儲存新 key 會取代舊 key；移除會清除已儲存的 key，並關閉潤飾。",
     "revealError": "無法顯示已儲存的 key，請重試。"
+  },
+  "dictionary": {
+    "title": "詞典",
+    "privacy": "詞彙提示和替換規則儲存在本機，並在本機執行。開啟雲端潤飾時，處理後的轉寫文字會傳送給 DeepSeek。",
+    "vocabulary": "自訂詞彙",
+    "description": "直接新增名稱或術語的正確寫法。Qwen3-ASR 和 Whisper 會在本機辨識時參考這些詞；其他模型僅支援英文詞的近似更正。詞彙提示可協助辨識，但不保證每次正確。",
+    "word": "詞語或短語",
+    "placeholder": "例如：星瀾科技、NovaLoom",
+    "add": "新增詞彙",
+    "save": "儲存詞彙",
+    "cancel": "取消",
+    "edit": "編輯",
+    "editWord": "編輯 {{word}}",
+    "removeWord": "移除 {{word}}",
+    "limit": "已新增 {{count}} / 32 個詞 · 每個最多 50 字，合計最多 400 字",
+    "empty": "還沒有自訂詞彙。只需填寫正確寫法，無需輸入錯誤詞。",
+    "loadError": "無法讀取詞彙，請重新開啟此頁面再試。",
+    "saveError": "儲存失敗，原有詞彙未更改。",
+    "invalidWord": "請輸入 1–50 字的詞語，不支援控制字元和角括號。",
+    "duplicate": "這個詞已經在詞典裡了。",
+    "wordLimit": "最多新增 32 個詞，合計不超過 400 字。",
+    "saved": "詞彙已儲存，下次轉寫時生效。",
+    "removed": "詞彙已移除，不再作為辨識提示。",
+    "replacements": "替換規則",
+    "replacementsHint": "辨識完成後，將已知的錯誤詞替換為指定寫法。這些規則與上面的詞彙提示分別生效。",
+    "addRule": "新增規則",
+    "duplicateRule": "這個錯誤詞已有替換規則，請先移除舊規則再新增。"
   }
 }

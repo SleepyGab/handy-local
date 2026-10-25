@@ -446,10 +446,15 @@ pub fn tray_tooltip() -> String {
 }
 
 fn version_label() -> String {
-    if cfg!(debug_assertions) {
-        format!("Handy v{} (Dev)", env!("CARGO_PKG_VERSION"))
+    let app_name = if cfg!(feature = "local-only") {
+        "nibi"
     } else {
-        format!("Handy v{}", env!("CARGO_PKG_VERSION"))
+        "Handy"
+    };
+    if cfg!(debug_assertions) {
+        format!("{} v{} (Dev)", app_name, env!("CARGO_PKG_VERSION"))
+    } else {
+        format!("{} v{}", app_name, env!("CARGO_PKG_VERSION"))
     }
 }
 
