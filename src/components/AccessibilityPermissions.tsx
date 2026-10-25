@@ -1,106 +1,74 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { type } from "@tauri-apps/plugin-os";
+import { platform } from "@tauri-apps/plugin-os";
 import {
   checkAccessibilityPermission,
   requestAccessibilityPermission,
 } from "tauri-plugin-macos-permissions-api";
-
-// Define permission state type
-type PermissionState = "request" | "verify" | "granted";
-
-// Define button configuration type
-interface ButtonConfig {
-  text: string;
-  className: string;
-}
+import { toast } from "sonner";
+import {
+  openAccessibilitySettings,
+  withPermissionTimeout,
+} from "@/lib/permissions";
 
 const AccessibilityPermissions: React.FC = () => {
   const { t } = useTranslation();
-  const [hasAccessibility, setHasAccessibility] = useState<boolean>(false);
-  const [permissionState, setPermissionState] =
-    useState<PermissionState>("request");
+  const [hasAccessibility, setHasAccessibility] = useState(true);
+  const isMacOS = platform() === "macos";
 
-  // Accessibility permissions are only required on macOS
-  const isMacOS = type() === "macos";
-
-  // Check permissions without requesting
-  const checkPermissions = async (): Promise<boolean> => {
-    const hasPermissions: boolean = await checkAccessibilityPermission();
-    setHasAccessibility(hasPermissions);
-    setPermissionState(hasPermissions ? "granted" : "verify");
-    return hasPermissions;
-  };
-
-  // Handle the unified button action based on current state
-  const handleButtonClick = async (): Promise<void> => {
-    if (permissionState === "request") {
-      try {
-        await requestAccessibilityPermission();
-        // After system prompt, transition to verification state
-        setPermissionState("verify");
-      } catch (error) {
-        console.error("Error requesting permissions:", error);
-        setPermissionState("verify");
-      }
-    } else if (permissionState === "verify") {
-      // State is "verify" - check if permission was granted
-      await checkPermissions();
-    }
-  };
-
-  // On app boot - check permissions (only on macOS)
   useEffect(() => {
     if (!isMacOS) return;
-
-    const initialSetup = async (): Promise<void> => {
-      const hasPermissions: boolean = await checkAccessibilityPermission();
-      setHasAccessibility(hasPermissions);
-      setPermissionState(hasPermissions ? "granted" : "request");
+    let cancelled = false;
+    let checking = false;
+    const check = async () => {
+      if (checking) return;
+      checking = true;
+      try {
+        const granted = await withPermissionTimeout(
+          checkAccessibilityPermission(),
+        );
+        if (!cancelled) setHasAccessibility(granted);
+      } catch (error) {
+        console.warn("Failed to check accessibility permission:", error);
+        if (!cancelled) setHasAccessibility(false);
+      } finally {
+        checking = false;
+      }
     };
-
-    initialSetup();
+    void check();
+    const onFocus = () => void check();
+    const timer = setInterval(onFocus, 3000);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [isMacOS]);
 
-  // Skip rendering on non-macOS platforms or if permission is already granted
-  if (!isMacOS || hasAccessibility) {
-    return null;
-  }
-
-  // Configure button text and style based on state
-  const buttonConfig: Record<PermissionState, ButtonConfig | null> = {
-    request: {
-      text: t("accessibility.openSettings"),
-      className:
-        "px-2 py-1 text-sm font-semibold bg-mid-gray/10 border  border-mid-gray/80 hover:bg-logo-primary/10 rounded cursor-pointer hover:border-logo-primary",
-    },
-    verify: {
-      text: t("accessibility.openSettings"),
-      className:
-        "bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-1 px-3 rounded-md text-sm flex items-center justify-center cursor-pointer",
-    },
-    granted: null,
+  const openSettings = async () => {
+    try {
+      await withPermissionTimeout(requestAccessibilityPermission());
+      await openAccessibilitySettings();
+    } catch {
+      toast.error(t("onboarding.permissions.errors.requestFailed"));
+    }
   };
-
-  const config = buttonConfig[permissionState] as ButtonConfig;
-
+  if (!isMacOS || hasAccessibility) return null;
   return (
     <div className="p-4 w-full rounded-lg border border-mid-gray">
       <div className="flex justify-between items-center gap-2">
-        <div className="">
-          <p className="text-sm font-medium">
-            {t("accessibility.permissionsDescription")}
-          </p>
-        </div>
+        <p className="text-sm font-medium">
+          {t("accessibility.permissionsDescription")}
+        </p>
         <button
-          onClick={handleButtonClick}
-          className={`min-h-10 ${config.className}`}
+          onClick={openSettings}
+          className="min-h-10 px-2 py-1 text-sm font-semibold border border-mid-gray/80 rounded hover:bg-logo-primary/10"
         >
-          {config.text}
+          {t("accessibility.openSettings")}
         </button>
       </div>
     </div>
   );
 };
-
 export default AccessibilityPermissions;

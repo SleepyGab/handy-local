@@ -28,6 +28,26 @@ pub fn is_update_checks_locked() -> bool {
     update_checks_forced_disabled()
 }
 
+/// Open the actual permission pane, including when macOS no longer shows a prompt.
+#[tauri::command]
+#[specta::specta]
+pub fn open_accessibility_settings(app: AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    return app
+        .opener()
+        .open_url(
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+            None::<String>,
+        )
+        .map_err(|e| format!("Failed to open accessibility settings: {}", e));
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = app;
+        Ok(())
+    }
+}
+
 #[tauri::command]
 #[specta::specta]
 pub fn get_app_dir_path(app: AppHandle) -> Result<String, String> {

@@ -59,6 +59,10 @@ def check(root: Path) -> list[str]:
         and "--config src-tauri/tauri.corrections.conf.json" in build,
         "build:local must use the local feature and identity",
     )
+    require(
+        "scripts/with_macos_signing.py" in build,
+        "build:local must preserve stable macOS signing",
+    )
     contains("src-tauri/Cargo.toml", "local-only = []")
     contains(
         "src-tauri/src/cloud_polish.rs",

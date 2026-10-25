@@ -32,11 +32,12 @@ jobs:
         run: |
           bun run upstream:test
           bun run check:local
+          python3 scripts/test_macos_signing.py
       - run: bun run lint
       - run: bun run build
       - run: bunx playwright install --with-deps chromium
-      - name: Test corrections, dictionary transfer, text polishing
-        run: bunx playwright test tests/corrections.spec.ts tests/vocabulary.spec.ts tests/dictionary-transfer.spec.ts tests/cloud-polish.spec.ts --reporter=line
+      - name: Test corrections, dictionary transfer, text polishing and permissions
+        run: bunx playwright test tests/corrections.spec.ts tests/vocabulary.spec.ts tests/dictionary-transfer.spec.ts tests/cloud-polish.spec.ts tests/permissions.spec.ts --reporter=line
       - name: Save browser failure evidence
         if: failure()
         uses: actions/upload-artifact@v7

@@ -331,6 +331,11 @@ class ForkGuardTests(unittest.TestCase):
             settings.write_text(original_settings.replace("cloud_polish_enabled: false", "cloud_polish_enabled: true"))
             self.assertTrue(any("cloud_polish_enabled" in error for error in check(fixture)))
             settings.write_text(original_settings)
+            package = fixture / "package.json"
+            original_package = package.read_text()
+            package.write_text(original_package.replace("python3 scripts/with_macos_signing.py -- ", ""))
+            self.assertTrue(any("stable macOS signing" in error for error in check(fixture)))
+            package.write_text(original_package)
             config = fixture / "src-tauri/tauri.corrections.conf.json"
             data = json.loads(config.read_text())
             data["identifier"] = "com.pais.handy"

@@ -14,8 +14,8 @@ This fork adds explicit local correction memory and a compact correction prompt.
 · [English installation guide](docs/INSTALL.en.md)
 · [中文安装说明](docs/INSTALL.zh-CN.md)
 
-The current package is an **early macOS Apple Silicon preview**, locally ad-hoc
-signed and **not notarized by Apple**. It has been tested on one Apple Silicon Mac;
+Handy Local is an **early macOS Apple Silicon preview**, **not notarized by Apple**.
+Current local builds reuse a certificate identity; older preview packages used ad-hoc signing. It has been tested on one Apple Silicon Mac;
 a second-machine installation still needs validation. Intel, Windows and Linux
 builds of this fork have not been validated. Models are downloaded separately.
 
@@ -72,7 +72,9 @@ CMAKE_POLICY_VERSION_MINIMUM=3.5 bun run build:local
 ```
 
 Always use `build:local` for Handy Local. A plain upstream build command does not
-include the local-only feature or the fork's separate application identity.
+include the local-only feature, the fork's separate application identity or stable
+macOS signing. On macOS, a code-signing certificate is required; see the
+[signing setup and permission recovery guide](docs/INSTALL.en.md#local-builds-and-permission-recovery).
 The output is `src-tauri/target/release/bundle/macos/Handy Local.app`.
 
 Implementation, limitations and focused test commands: [LOCAL_CORRECTIONS.md](LOCAL_CORRECTIONS.md).
