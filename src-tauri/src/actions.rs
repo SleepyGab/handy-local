@@ -345,6 +345,7 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
 }
 
 pub(crate) struct ProcessedTranscription {
+    pub original_text: String,
     pub final_text: String,
     pub post_processed_text: Option<String>,
     pub post_process_prompt: Option<String>,
@@ -356,11 +357,18 @@ pub(crate) async fn process_transcription_output(
     post_process: bool,
 ) -> ProcessedTranscription {
     let settings = get_settings(app);
-    let mut final_text = transcription.to_string();
+    let original_text = crate::local_corrections::apply(app, transcription);
+    let mut final_text = original_text.clone();
     let mut post_processed_text: Option<String> = None;
     let mut post_process_prompt: Option<String> = None;
 
-    if post_process && !cfg!(feature = "local-only") {
+    if settings.cloud_polish_enabled {
+        if let Some(processed_text) = crate::cloud_polish::polish(app, &original_text).await {
+            post_processed_text = Some(processed_text.clone());
+            final_text = processed_text;
+            post_process_prompt = Some(crate::cloud_polish::PROMPT.trim().to_string());
+        }
+    } else if post_process && !cfg!(feature = "local-only") {
         if let Some(processed_text) = post_process_transcription(&settings, &final_text).await {
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
@@ -377,8 +385,8 @@ pub(crate) async fn process_transcription_output(
         }
     }
 
-    let final_text = crate::local_corrections::apply(app, &final_text);
     ProcessedTranscription {
+        original_text,
         final_text,
         post_processed_text,
         post_process_prompt,
@@ -701,7 +709,7 @@ impl ShortcutAction for TranscribeAction {
                                 utils::redact_text(&transcription)
                             );
 
-                            if post_process {
+                            if post_process || get_settings(&ah).cloud_polish_enabled {
                                 if use_streaming_overlay {
                                     tm.emit_stream_working(StreamWorkKind::Polishing);
                                 } else {
@@ -731,8 +739,8 @@ impl ShortcutAction for TranscribeAction {
                             if wav_saved {
                                 if let Err(err) = hm.save_entry(
                                     file_name,
-                                    transcription,
-                                    post_process,
+                                    processed.original_text.clone(),
+                                    post_process || get_settings(&ah).cloud_polish_enabled,
                                     processed.post_processed_text.clone(),
                                     processed.post_process_prompt.clone(),
                                 ) {

@@ -10,6 +10,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { CorrectionsSettings } from "../corrections/Corrections";
+import { CloudPolishSettings } from "./settings/CloudPolishSettings";
 import HandyTextLogo from "./icons/HandyTextLogo";
 import HandyHand from "./icons/HandyHand";
 import { useSettings } from "../hooks/useSettings";
@@ -51,6 +52,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "dictionary.title",
     icon: BookOpen,
     component: CorrectionsSettings,
+    enabled: () => true,
+  },
+  cloudpolish: {
+    labelKey: "cloudPolish.title",
+    icon: Sparkles,
+    component: CloudPolishSettings,
     enabled: () => true,
   },
   history: {

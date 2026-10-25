@@ -117,7 +117,15 @@
       "allGranted": "All set!",
       "errors": {
         "checkFailed": "Failed to check permissions. Please try again.",
-        "requestFailed": "Failed to request permission. Please try again."
+        "requestFailed": "Failed to request permission. Please try again.",
+        "restartFailed": "Could not restart. Quit and reopen Handy Local."
+      },
+      "recheck": "Check again",
+      "restart": "Restart Handy Local",
+      "recovery": {
+        "accessibility": "macOS has not authorized this running copy yet. If the switch is already on, remove the old Handy Local entry with the minus button, add Handy Local from Applications again, and enable it. Then return here or restart Handy Local.",
+        "microphone": "Microphone access has not been detected. Check the microphone permission in System Settings, then check again.",
+        "initialization": "Permissions are granted, but input setup has not completed. Check again or restart Handy Local."
       }
     }
   },
@@ -790,7 +798,7 @@
   },
   "dictionary": {
     "title": "Dictionary",
-    "privacy": "Vocabulary hints and replacement rules are stored and applied locally. Audio stays on your device.",
+    "privacy": "Vocabulary hints and replacement rules are stored and applied locally. If cloud polishing is enabled, the resulting transcription text is sent to DeepSeek.",
     "vocabulary": "Custom vocabulary",
     "description": "Add the correct spelling of a name or term. Qwen3-ASR and Whisper use these words during local recognition; other models only support approximate correction of English words. Hints improve recognition but do not guarantee a match.",
     "word": "Word or phrase",
@@ -814,5 +822,45 @@
     "replacementsHint": "Replace a known transcription mistake with an exact spelling after recognition. These rules are separate from vocabulary hints.",
     "addRule": "Add rule",
     "duplicateRule": "A rule for this spelling already exists. Remove it before adding a replacement."
+  },
+  "cloudPolish": {
+    "title": "Text polishing",
+    "description": "Optional DeepSeek polishing after local speech recognition. It removes filler words and improves punctuation and paragraphs while preserving your meaning.",
+    "enable": "Polish transcriptions with DeepSeek",
+    "privacy": "Off by default. When enabled, transcription text is sent to DeepSeek using your API key. Audio stays on your device. If polishing fails, Handy uses the original text.",
+    "apiKey": "DeepSeek API key",
+    "keyPlaceholder": "Paste your DeepSeek API key",
+    "keyReplace": "Enter a new key to replace the saved key",
+    "keyConfigured": "A key is saved above. Enter a new key below only to replace it.",
+    "keyMissing": "Save your own API key before enabling polishing.",
+    "saveKey": "Save key",
+    "removeKey": "Remove key",
+    "model": "DeepSeek Flash · thinking disabled · billed to your DeepSeek account",
+    "keySaved": "Key saved. Use the switch above to choose whether to enable polishing.",
+    "keyRemoved": "Key removed and polishing disabled.",
+    "enabledNotice": "Polishing is on. Future transcriptions will send text to DeepSeek.",
+    "disabledNotice": "Polishing is off. Future transcriptions stay local.",
+    "loadError": "Could not load polishing settings. Reopen this page to try again.",
+    "saveError": "Could not save the change. Check your key and try again.",
+    "copyError": "Could not copy the text. Try again.",
+    "originalCopied": "Original text copied. Paste it to replace the polished result.",
+    "resultCopied": "Polished text copied.",
+    "lastTitle": "Latest polishing result",
+    "lastDescription": "The latest result stays in memory until you clear it or quit. Saved history also keeps both versions. Restore copies the original for you to paste.",
+    "fallback": "Polishing was unavailable. The original text was used.",
+    "original": "Before polishing",
+    "result": "Polished text",
+    "restore": "Restore original",
+    "copyResult": "Copy polished text",
+    "clear": "Clear latest result",
+    "cleared": "Latest result cleared.",
+    "noLast": "No polishing result in this session yet.",
+    "showOriginal": "Show original",
+    "showResult": "Show polished text",
+    "savedKey": "Saved DeepSeek key",
+    "showKey": "Show key",
+    "hideKey": "Hide key",
+    "savedKeyHelp": "One DeepSeek key is stored on this device. Saving a new key replaces the previous one. Removing it clears the saved key and turns polishing off.",
+    "revealError": "Could not display the saved key. Please try again."
   }
 }

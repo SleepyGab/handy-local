@@ -148,7 +148,14 @@ Resources only need re-copying if they change upstream (new icons, sounds, model
 
 ### macOS Accessibility remains enabled after a local rebuild
 
-Local builds use the ad-hoc `signingIdentity: "-"`. A rebuild can have a new macOS code
+For **Handy Local**, use `bun run build:local`: it selects a stable certificate
+from the macOS keychain instead of inheriting the ad-hoc default. See
+[local signing setup and recovery](docs/INSTALL.en.md#local-builds-and-permission-recovery).
+A first migration from an old signature may need the Handy Local entry removed
+and re-added from Applications. Its permission page now rechecks automatically
+and offers recovery controls after 15 seconds.
+
+The upstream direct build command still uses ad-hoc `signingIdentity: "-"`. A rebuild can have a new macOS code
 identity while the old **System Settings > Privacy & Security > Accessibility** entry
 remains visibly enabled, leaving Handy on `Waiting...`.
 

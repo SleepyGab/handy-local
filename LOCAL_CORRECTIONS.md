@@ -65,7 +65,8 @@ uses a single decode. Hints are not model training and do not guarantee spelling
 
 Limit: 32 terms, 50 Unicode characters per term, 400 total. Legacy oversized
 lists are preserved, remain removable, and are bounded when building a prompt.
-Vocabulary hints do not make network requests or upload audio.
+No dictionary list is added to DeepSeek requests. If cloud polishing is enabled,
+the resulting transcription text is still sent as before.
 
 ## Dictionary transfer
 
@@ -85,13 +86,26 @@ rejected in full; limits are 8 MiB and 10,000 rules. All file processing is loca
 
 ## Privacy boundary
 
-The `local-only` Cargo feature blocks remote chat-completion/model-list requests,
-ignores dictation post-processing, and locks automatic update checks off. The
-new correction code has no network client. The local app's webview CSP disallows
+The `local-only` Cargo feature blocks the inherited generic remote
+chat-completion/model-list requests and locks automatic update checks off.
+The separate `cloud_polish` module permits only an explicitly enabled, fixed
+DeepSeek text endpoint. Saving a key does not enable it; audio inference and
+dictionary corrections remain local. Dictionary corrections run before optional
+polishing, and that exact pre-polish text is kept for fallback and recovery.
+The correction code has no network client. The local app's webview CSP disallows
 external fetch connections. Model downloads remain available when explicitly
 requested in the model picker; downloaded model files reuse the Hugging Face
 cache. This is not a process-wide firewall. Text deliberately dictated into an
 online application follows that application's own transmission behavior.
+
+Cloud polishing uses the benchmarked conservative prompt, disables thinking,
+does not follow redirects, and has a 12-second request timeout. Incomplete,
+empty, invalid and failed responses fall back to the original. Original and
+polished text remain separate in History; the latest result also lives in memory
+until cleared or exit, so recovery does not depend on successfully saving audio.
+Restore copies the original for explicit pasting; it does not replace text in
+an arbitrary foreground application. The user-owned key stays in local settings
+with redacted debug formatting and owner-only file permissions on Unix.
 
 ## Build
 
@@ -99,14 +113,14 @@ online application follows that application's own transmission behavior.
 export PATH="$HOME/.cargo/bin:$PATH"
 bun install --frozen-lockfile
 # Requires Xcode command line tools, cmake, Rust, Bun and the existing VAD resource.
-CMAKE_POLICY_VERSION_MINIMUM=3.5 bun run tauri build \
-  --config src-tauri/tauri.corrections.conf.json --features local-only --bundles app
+CMAKE_POLICY_VERSION_MINIMUM=3.5 bun run build:local
 ```
 
 Output: `src-tauri/target/release/bundle/macos/Handy Local.app`.
 The original `/Applications/Handy.app` and its app data are separate. The custom
-bundle is ad-hoc signed; macOS may require its own microphone and accessibility
-permissions. Do not run both copies with the Fn binding simultaneously.
+bundle uses a stable certificate identity from the macOS keychain (see
+[signing setup](docs/INSTALL.en.md#local-builds-and-permission-recovery)); macOS
+requires its own microphone and accessibility permissions. Do not run both copies with the Fn binding simultaneously.
 
 ## Validation
 
@@ -118,6 +132,9 @@ bun run lint
 CMAKE_POLICY_VERSION_MINIMUM=3.5 cargo clippy --manifest-path src-tauri/Cargo.toml \
   --features local-only --lib
 bunx playwright test tests/corrections.spec.ts tests/dictionary-transfer.spec.ts --reporter=line
+python3 scripts/check_local_fork.py
+cargo test --manifest-path src-tauri/Cargo.toml --features local-only cloud_polish --lib
+bunx playwright test tests/cloud-polish.spec.ts --reporter=line
 ```
 
 The UI tests mock the IPC boundary; they do not prove real macOS accessibility

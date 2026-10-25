@@ -98,7 +98,7 @@ pub async fn retry_history_entry_transcription(
     history_manager
         .update_transcription(
             id,
-            transcription,
+            processed.original_text,
             processed.post_processed_text,
             processed.post_process_prompt,
         )

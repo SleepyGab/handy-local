@@ -59,12 +59,26 @@ def check(root: Path) -> list[str]:
         and "--config src-tauri/tauri.corrections.conf.json" in build,
         "build:local must use the local feature and identity",
     )
+    require(
+        "scripts/with_macos_signing.py" in build,
+        "build:local must preserve stable macOS signing",
+    )
     contains("src-tauri/Cargo.toml", "local-only = []")
+    contains(
+        "src-tauri/src/cloud_polish.rs",
+        'https://api.deepseek.com/chat/completions',
+        'settings.cloud_polish_enabled && !api_key(settings).is_empty()',
+        '.redirect(Policy::none())',
+        '"thinking": {"type": "disabled"}',
+        'disabled_and_legacy_settings_never_opt_in',
+    )
     contains("src-tauri/Cargo.toml", 'path = "vendor/transcribe-cpp"', 'path = "vendor/transcribe-cpp-sys"')
     contains("src-tauri/src/managers/transcription.rs", "crate::vocabulary::transcribe(")
     contains("src-tauri/src/vocabulary.rs", "has_spelling_cue", "RunExtension::Qwen3Asr", "session.run(audio, &plain)")
     contains("src/corrections/Corrections.tsx", "<Vocabulary />")
     contains("src-tauri/vendor/transcribe-cpp-sys/src/arch/qwen3_asr/model.cpp", "encode_context", "accepts_context")
+    contains("src-tauri/src/settings.rs", "cloud_polish_enabled: false")
+    contains("src-tauri/src/actions.rs", "crate::cloud_polish::polish(app, &original_text)")
     contains("src-tauri/build.rs", "build_local_corrections_bridge();")
     contains(
         "src-tauri/src/lib.rs",
