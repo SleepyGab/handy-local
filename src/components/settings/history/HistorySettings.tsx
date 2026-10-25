@@ -251,7 +251,6 @@ export const HistorySettings: React.FC = () => {
                 key={entry.id}
                 entry={entry}
                 onToggleSaved={() => toggleSaved(entry.id)}
-                onCopyText={() => copyToClipboard(entry.transcription_text)}
                 getAudioUrl={getAudioUrl}
                 deleteAudio={deleteAudioEntry}
                 retryTranscription={retryHistoryEntry}
@@ -290,7 +289,6 @@ export const HistorySettings: React.FC = () => {
 interface HistoryEntryProps {
   entry: HistoryEntry;
   onToggleSaved: () => void;
-  onCopyText: () => Promise<boolean>;
   getAudioUrl: (fileName: string) => Promise<string | null>;
   deleteAudio: (id: number) => Promise<void>;
   retryTranscription: (id: number) => Promise<void>;
@@ -299,7 +297,6 @@ interface HistoryEntryProps {
 const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   entry,
   onToggleSaved,
-  onCopyText,
   getAudioUrl,
   deleteAudio,
   retryTranscription,
@@ -307,6 +304,10 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   const { t, i18n } = useTranslation();
   const [showCopied, setShowCopied] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
+  const displayedText = showOriginal
+    ? entry.transcription_text
+    : entry.post_processed_text || entry.transcription_text;
 
   const hasTranscription = entry.transcription_text.trim().length > 0;
 
@@ -320,7 +321,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
       return;
     }
 
-    const copied = await onCopyText();
+    const copied = await copyToClipboard(displayedText);
     if (!copied) {
       toast.error(t("settings.history.copyError"));
       return;
@@ -352,6 +353,15 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   };
 
   const formattedDate = formatDateTime(String(entry.timestamp), i18n.language);
+
+  const restoreOriginal = async () => {
+    if (await copyToClipboard(entry.transcription_text)) {
+      setShowOriginal(true);
+      toast.success(t("cloudPolish.originalCopied"));
+    } else {
+      toast.error(t("settings.history.copyError"));
+    }
+  };
 
   return (
     <div className="px-4 py-2 pb-5 flex flex-col gap-3">
@@ -410,6 +420,33 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
         </div>
       </div>
 
+      {entry.post_processed_text && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={retrying}
+            onClick={() => setShowOriginal(!showOriginal)}
+          >
+            {t(
+              showOriginal
+                ? "cloudPolish.showResult"
+                : "cloudPolish.showOriginal",
+            )}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={retrying}
+            onClick={() => void restoreOriginal()}
+          >
+            {t("cloudPolish.restore")}
+          </Button>
+          <span className="text-xs text-text/60">
+            {t(showOriginal ? "cloudPolish.original" : "cloudPolish.result")}
+          </span>
+        </div>
+      )}
       <p
         className={`italic text-sm pb-2 ${
           retrying
@@ -435,7 +472,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
         {retrying
           ? t("settings.history.transcribing")
           : hasTranscription
-            ? entry.transcription_text
+            ? displayedText
             : t("settings.history.transcriptionFailed")}
       </p>
 

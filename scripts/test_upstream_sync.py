@@ -304,10 +304,11 @@ class ForkGuardTests(unittest.TestCase):
                 "src-tauri/src/actions.rs",
                 "src-tauri/src/settings.rs",
                 "src-tauri/src/llm_client.rs",
-                "src-tauri/src/local_corrections.rs",
+                "src-tauri/src/cloud_polish.rs",
                 "src-tauri/src/vocabulary.rs",
                 "src-tauri/src/managers/transcription.rs",
                 "src-tauri/vendor/transcribe-cpp-sys/src/arch/qwen3_asr/model.cpp",
+                "src-tauri/src/local_corrections.rs",
                 "src-tauri/src/corrections_transfer.rs",
                 "src-tauri/native/local_corrections.m",
                 "src/corrections/Corrections.tsx",
@@ -325,6 +326,11 @@ class ForkGuardTests(unittest.TestCase):
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(root / relative, destination)
             self.assertEqual(check(fixture), [])
+            settings = fixture / "src-tauri/src/settings.rs"
+            original_settings = settings.read_text()
+            settings.write_text(original_settings.replace("cloud_polish_enabled: false", "cloud_polish_enabled: true"))
+            self.assertTrue(any("cloud_polish_enabled" in error for error in check(fixture)))
+            settings.write_text(original_settings)
             config = fixture / "src-tauri/tauri.corrections.conf.json"
             data = json.loads(config.read_text())
             data["identifier"] = "com.pais.handy"

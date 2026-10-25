@@ -33,7 +33,14 @@ Optional: enable launch at login, start hidden, and unload the model after 5 min
 in Handy's settings. A fresh installation has its own preferences and empty dictionary;
 this package does not copy the developer's settings, recordings or remembered words.
 
-All transcription/correction processing is local. Explicit model downloads use the
+Speech recognition and dictionary corrections are local. **Text polishing** is
+optional and off by default: save your own DeepSeek API key in settings, then
+explicitly enable it to send transcription text (never audio) to DeepSeek.
+The saved-key card shows a masked key and its final four characters. **Show key**
+reveals it on request; **Remove key** deletes it and turns polishing off. Only one
+DeepSeek key is stored, and saving another replaces it.
+Errors fall back to the original. **Restore original** in the latest result or
+History copies the original for you to paste. Explicit model downloads use the
 network, and the app you dictate into may itself send text online. For local-only
 backups, save exported dictionaries outside cloud-synced folders.
 

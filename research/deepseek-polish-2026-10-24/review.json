@@ -1,0 +1,106 @@
+{
+  "reviewer": "assistant qualitative review",
+  "not_a_general_accuracy_estimate": true,
+  "cases": [
+    {
+      "id": "c01",
+      "major_meaning_error_observed": false,
+      "note": "去除停顿和口吃，会议时间保留。"
+    },
+    {
+      "id": "c02",
+      "major_meaning_error_observed": false,
+      "note": "保留“可能”和“不能保证”，没有升级为承诺。"
+    },
+    {
+      "id": "c03",
+      "major_meaning_error_observed": false,
+      "note": "正确采用自我纠正后的周四下午两点。"
+    },
+    {
+      "id": "c05",
+      "major_meaning_error_observed": false,
+      "note": "保留 12500 元与 150000 元的否定对比。"
+    },
+    {
+      "id": "c06",
+      "major_meaning_error_observed": false,
+      "note": "正确区分 0.5% 和 5%。"
+    },
+    {
+      "id": "c10",
+      "major_meaning_error_observed": false,
+      "note": "作为讨论对象的“嗯”没有被误删。"
+    },
+    {
+      "id": "p01",
+      "major_meaning_error_observed": false,
+      "note": "默认关闭、用户自选和本地/云端两种选择都保留。"
+    },
+    {
+      "id": "p05",
+      "major_meaning_error_observed": false,
+      "note": "仍然只退运费，不扩展为商品退款。"
+    },
+    {
+      "id": "h17",
+      "major_meaning_error_observed": false,
+      "note": "月费 89 元与一次性 39 元对应正确。"
+    },
+    {
+      "id": "h20",
+      "major_meaning_error_observed": false,
+      "note": "最终条件正确；仍保留被撤回的表述，较为保守。"
+    },
+    {
+      "id": "c17",
+      "major_meaning_error_observed": false,
+      "note": "保留不要 merge 和等待 CI 全绿的条件。"
+    },
+    {
+      "id": "c18",
+      "major_meaning_error_observed": false,
+      "note": "英文术语未翻译，禁止直接全量发布的含义保留。"
+    },
+    {
+      "id": "c20",
+      "major_meaning_error_observed": false,
+      "note": "版本号和分支名逐字保留。"
+    },
+    {
+      "id": "c21",
+      "major_meaning_error_observed": false,
+      "note": "保留代码标识符、false 和默认不调用云端的含义。"
+    },
+    {
+      "id": "c22",
+      "major_meaning_error_observed": false,
+      "note": "邮箱和 URL 参数保留。"
+    },
+    {
+      "id": "c24",
+      "major_meaning_error_observed": false,
+      "note": "endpoint 纠正为 403，login 仍然是 401，未混淆。"
+    },
+    {
+      "id": "c26",
+      "major_meaning_error_observed": false,
+      "note": "将 quote/unquote 转为引号，保留英文否定。"
+    },
+    {
+      "id": "p11",
+      "major_meaning_error_observed": false,
+      "note": "延迟变慢与内存下降的方向、单位和数值正确；仅将句首 Memory 大写。"
+    },
+    {
+      "id": "h05",
+      "major_meaning_error_observed": false,
+      "note": "仅调整 max_retries，另一个参数仍为 200。"
+    },
+    {
+      "id": "long01",
+      "major_meaning_error_observed": false,
+      "note": "角色、默认值、条件、否定和不承诺发布日期均保留；仍有“哦，还有”口语。"
+    }
+  ]
+}
