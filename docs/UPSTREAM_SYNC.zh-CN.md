@@ -1,5 +1,8 @@
 # 同步官方 Handy 正式版本
 
+本仓库的默认分支是 `nibi`（原名 `handy-local`）；新功能与上游正式版更新均合入这里。
+`main` 保留上游 Handy 代码，不是 Nibi 的开发主线。
+
 Handy Local 跟随 `cjpais/Handy` 的正式 GitHub Release，不跟随 `main`，也不引入
 预发布版、草稿或只有 tag 而没有正式 Release 的版本。
 [`.github/upstream-sync.json`](../.github/upstream-sync.json) 记录已合入的版本和
@@ -9,10 +12,10 @@ Handy Local 跟随 `cjpais/Handy` 的正式 GitHub Release，不跟随 `main`，
 
 GitHub Actions 的 **Check official Handy releases** 每周一 16:23 UTC
 （洛杉矶夏令时 09:23、冬令时 08:23）检查一次。也可以在 Actions 页面手动点击
-**Run workflow**，选择 `handy-local` 分支。
+**Run workflow**，选择 `nibi` 分支。
 
 - 没有新版：成功结束，不创建分支，也不重新构建。
-- 有正式新版：从 `handy-local` 创建 `codex/upstream-vX.Y.Z` 同步分支，保留
+- 有正式新版：从 `nibi` 创建 `codex/upstream-vX.Y.Z` 同步分支，保留
   Git 合并历史，并运行 **Handy Local validation**。
 - 分支已存在：保留已有人工修改，不覆盖或强推；重新验证该分支当前 commit。
 - 合并冲突、保护检查失败、上游 tag 被移动或历史分叉：停止，Actions 标为失败。
@@ -56,7 +59,7 @@ git push -u origin codex/upstream-vX.Y.Z
 
 需要指定历史正式版时，`bun run upstream:prepare --tag vX.Y.Z` 仍然会查询 Release
 并拒绝预发布或降级。自动任务的 `--publish` 只允许发布到这个 fork，并要求从远端
-当前 `handy-local` 开始；不会把修改推到官方 Handy。
+当前 `nibi` 开始；不会把修改推到官方 Handy。
 
 ## 保留什么、怎样验证
 
@@ -82,8 +85,8 @@ CI 另行运行 Rust 本地纠错测试（含词典持久化、导入导出、�
 在新的维护分支里手动重现合并：
 
 ```sh
-git switch handy-local
-git pull --ff-only origin handy-local
+git switch nibi
+git pull --ff-only origin nibi
 git switch -c codex/resolve-upstream-vX.Y.Z
 git fetch --no-tags upstream refs/tags/vX.Y.Z
 git merge --no-commit --no-ff FETCH_HEAD

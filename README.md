@@ -8,9 +8,12 @@ records the currently integrated official release. Not an official Handy release
 Handy provides the dictation engine, model manager, shortcuts and application UI.
 This fork adds explicit local correction memory and a compact correction prompt.
 
+The default branch is `nibi` (previously `handy-local`). Merge feature work and
+official stable-release updates into `nibi`; `main` retains upstream Handy code.
+
 ## Install
 
-[Download the Apple Silicon preview](https://github.com/SleepyGab/handy-local/releases)
+[Download the Apple Silicon preview](https://github.com/SleepyGab/nibi/releases)
 · [English installation guide](docs/INSTALL.en.md)
 · [中文安装说明](docs/INSTALL.zh-CN.md)
 

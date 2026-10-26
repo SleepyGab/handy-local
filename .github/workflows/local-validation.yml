@@ -8,9 +8,9 @@ on:
         type: string
   workflow_dispatch:
   pull_request:
-    branches: [handy-local, "codex/**"]
+    branches: [nibi, "codex/**"]
   push:
-    branches: [handy-local]
+    branches: [nibi]
 
 permissions:
   contents: read

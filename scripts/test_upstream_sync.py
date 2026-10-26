@@ -51,7 +51,7 @@ class MergeTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name) / "repo"
         self.root.mkdir()
-        self.git("init", "-b", "handy-local")
+        self.git("init", "-b", sync.BASE_BRANCH)
         self.git("config", "user.name", "Fixture")
         self.git("config", "user.email", "fixture@example.invalid")
         self.git("config", "commit.gpgsign", "false")
@@ -103,7 +103,7 @@ class MergeTests(unittest.TestCase):
             self.write("shared.txt", "upstream competing line\n")
         self.commit("official next release")
         commit = self.git("rev-parse", "HEAD")
-        self.git("switch", "handy-local")
+        self.git("switch", sync.BASE_BRANCH)
         return commit
 
     def prepare(self, upstream):
@@ -151,7 +151,7 @@ class MergeTests(unittest.TestCase):
         self.write("review.txt", "maintainer reviewed\n")
         self.commit("manual review")
         reviewed = self.git("rev-parse", "HEAD")
-        self.git("switch", "handy-local")
+        self.git("switch", sync.BASE_BRANCH)
         result = self.synchronize(upstream)
         self.assertEqual(result["status"], "existing")
         self.assertEqual(result["commit"], reviewed)

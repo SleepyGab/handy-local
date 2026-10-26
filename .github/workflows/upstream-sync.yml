@@ -10,12 +10,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: handy-local-upstream-sync
+  group: nibi-upstream-sync
   cancel-in-progress: false
 
 jobs:
   prepare:
-    if: github.repository == 'SleepyGab/handy-local' && github.ref == 'refs/heads/handy-local'
+    if: github.repository == 'SleepyGab/nibi' && github.ref == 'refs/heads/nibi'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: handy-local
+          ref: nibi
           fetch-depth: 0
 
       - name: Check release and prepare an isolated merge

@@ -18,8 +18,8 @@ from urllib.parse import urlencode
 from check_local_fork import check as check_local_fork
 
 UPSTREAM = "cjpais/Handy"
-FORK = "SleepyGab/handy-local"
-BASE_BRANCH = "handy-local"
+FORK = "SleepyGab/nibi"
+BASE_BRANCH = "nibi"
 STATE = ".github/upstream-sync.json"
 # Only fork-owned metadata/tooling is kept wholesale. Runtime source is merged
 # normally so upstream fixes are retained; conflicts there require human review.
@@ -372,11 +372,11 @@ def synchronize(root: Path, args: argparse.Namespace) -> dict:
             root, "ls-remote", "--heads", "origin", f"refs/heads/{BASE_BRANCH}"
         ).split()
         if not remote_refs:
-            raise RuntimeError("The fork's handy-local base branch was not found")
+            raise RuntimeError(f"The fork's {BASE_BRANCH} base branch was not found")
         remote_base = remote_refs[0]
         if remote_base != git(root, "rev-parse", "HEAD"):
             raise RuntimeError(
-                "Checkout must match the current remote handy-local branch before publishing"
+                f"Checkout must match the current remote {BASE_BRANCH} branch before publishing"
             )
     remote = git(root, "ls-remote", "--heads", "origin", f"refs/heads/{branch}")
     local = git(root, "rev-parse", "--verify", f"refs/heads/{branch}", ok=(0, 128))
@@ -398,7 +398,7 @@ def synchronize(root: Path, args: argparse.Namespace) -> dict:
             "git", "merge-base", "--is-ancestor", "HEAD", existing, cwd=root, ok=(0, 1)
         ).returncode:
             raise RuntimeError(
-                "Existing sync branch is behind the current base. Merge handy-local into it and revalidate"
+                f"Existing sync branch is behind the current base. Merge {BASE_BRANCH} into it and revalidate"
             )
         if args.publish and not remote:
             git(
