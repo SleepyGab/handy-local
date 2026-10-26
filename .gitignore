@@ -46,6 +46,9 @@ result
 # Python bytecode (scripts/)
 __pycache__/
 
+# Local research notes, experiments, and results
+/research/
+
 # Local release output and private runtime data
 /release-artifacts/
 .env
