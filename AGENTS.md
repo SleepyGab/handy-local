@@ -2,6 +2,13 @@
 
 This file provides guidance to AI coding assistants working with code in this repository.
 
+## Public project communication
+
+- Write README content, release notes, PR descriptions and installation guidance for an unfamiliar public audience.
+- Use English as the primary language. Provide Chinese as a separate translation or supplementary section.
+- Do not include private conversation context, personal device or host names, local usernames or paths, or plans involving a particular person's computer. Include only public project facts and information needed to use or review nibi.
+- Keep installation, macOS security approval, and Microphone/Accessibility permissions distinct. Do not describe development signing as a notarized distribution build.
+
 ## Development Commands
 
 **Prerequisites:**

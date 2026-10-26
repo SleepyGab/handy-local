@@ -1,11 +1,123 @@
 import { expect, test } from "@playwright/test";
 
+test("provider keys stay separate and switching providers always turns polishing off", async ({
+  page,
+}) => {
+  await page.goto("/tests/fixtures/cloud-polish.html?saved");
+  const provider = page.getByLabel("AI 服务平台");
+  await expect(provider).toHaveValue("deepseek");
+  await expect(provider.locator("option").first()).toHaveAttribute(
+    "value",
+    "deepseek",
+  );
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "显示 key", exact: true }).click();
+  await provider.selectOption("openai");
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
+  await expect(page.getByRole("checkbox")).toBeDisabled();
+  await expect(page.getByLabel("已保存的 OpenAI key")).toHaveCount(0);
+  await expect(page.getByLabel("模型", { exact: true })).toHaveValue(
+    "gpt-6-luna",
+  );
+  await page
+    .getByLabel("OpenAI API key", { exact: true })
+    .fill("sk-openai-fixture-5678");
+  await page.getByRole("button", { name: "保存 key", exact: true }).click();
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
+  await page.getByRole("checkbox").check();
+  await provider.selectOption("deepseek");
+  await expect(page.getByLabel("已保存的 DeepSeek key")).toHaveValue(
+    "••••••••1234",
+  );
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
+  await page.getByRole("button", { name: "移除 key" }).click();
+  await provider.selectOption("openai");
+  await expect(page.getByLabel("已保存的 OpenAI key")).toHaveValue(
+    "••••••••5678",
+  );
+  await page.reload();
+  await expect(provider).toHaveValue("openai");
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
+});
+
+test("writing mode and model persist without enabling polishing", async ({
+  page,
+}) => {
+  await page.goto("/tests/fixtures/cloud-polish.html");
+  await page.getByLabel("整理模式", { exact: true }).selectOption("meeting");
+  await expect(page.getByText(/整理讨论、决定和后续行动/)).toBeVisible();
+  await page.getByLabel("整理模式", { exact: true }).selectOption("journal");
+  await expect(page.getByText(/把口述想法整理成自然段落/)).toBeVisible();
+  await page.getByLabel("模型", { exact: true }).fill("another-flash-model");
+  await page.getByRole("button", { name: "保存模型", exact: true }).click();
+  await page.reload();
+  await expect(page.getByLabel("整理模式", { exact: true })).toHaveValue(
+    "journal",
+  );
+  await expect(page.getByLabel("模型", { exact: true })).toHaveValue(
+    "another-flash-model",
+  );
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
+  await page.getByLabel("模型", { exact: true }).fill("");
+  await page.getByRole("button", { name: "保存模型", exact: true }).click();
+  await expect(page.getByLabel("模型", { exact: true })).toHaveValue(
+    "deepseek-flash",
+  );
+});
+
+test("a failed provider change keeps the existing provider and key", async ({
+  page,
+}) => {
+  await page.goto("/tests/fixtures/cloud-polish.html?saved&configerror");
+  await page.getByLabel("AI 服务平台").selectOption("anthropic");
+  await expect(page.getByRole("alert")).toContainText("保存失败");
+  await expect(page.getByLabel("AI 服务平台")).toHaveValue("deepseek");
+  await expect(page.getByLabel("已保存的 DeepSeek key")).toHaveValue(
+    "••••••••1234",
+  );
+});
+
+test("polishing wait limit is separate from recording and persists across modes and providers", async ({
+  page,
+}) => {
+  await page.goto("/tests/fixtures/cloud-polish.html?saved");
+  const timeout = page.getByLabel("润色最长等待时间");
+  await expect(timeout).toHaveValue("12");
+  await expect(timeout.locator("option")).toHaveText([
+    "12 秒（默认）",
+    "30 秒",
+    "60 秒",
+    "120 秒",
+  ]);
+  await expect(page.getByText(/不是录音时长限制/)).toBeVisible();
+  await timeout.selectOption("60");
+  await expect(
+    page.getByText("已保存润色等待时间。", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
+  await page.getByLabel("整理模式", { exact: true }).selectOption("meeting");
+  await page.getByLabel("AI 服务平台").selectOption("openai");
+  await page.reload();
+  await expect(timeout).toHaveValue("60");
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
+});
+
+test("a failed timeout change retains the saved budget", async ({ page }) => {
+  await page.goto("/tests/fixtures/cloud-polish.html?configerror");
+  const timeout = page.getByLabel("润色最长等待时间");
+  await timeout.selectOption("120");
+  await expect(page.getByRole("alert")).toContainText("保存失败");
+  await expect(timeout).toHaveValue("12");
+  await page.reload();
+  await expect(timeout).toHaveValue("12");
+});
+
 test("saving a masked key does not opt in; removing it disables polishing", async ({
   page,
 }) => {
   await page.goto("/tests/fixtures/cloud-polish.html");
   const toggle = page.getByRole("checkbox", {
-    name: "使用 DeepSeek 润色转录文字",
+    name: "开启文字润色",
   });
   await expect(toggle).not.toBeChecked();
   await expect(toggle).toBeDisabled();

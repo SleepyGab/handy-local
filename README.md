@@ -1,10 +1,9 @@
 # nibi
 
 Local voice dictation for macOS, with custom vocabulary, a correction dictionary,
-and optional DeepSeek text polishing.
+and optional text polishing with your choice of AI provider.
 
-按住快捷键说话，松开即可输入。支持本地语音识别、自定义词汇、确认后记住纠正，
-以及可选的 DeepSeek 文字润色与长口述整理。
+[English installation guide](docs/INSTALL.en.md) · [中文安装说明](docs/INSTALL.zh-CN.md)
 
 nibi (formerly Handy Local) is an independent community fork of
 [Handy](https://github.com/cjpais/Handy), originally based on **v0.9.8**.
@@ -31,11 +30,16 @@ integrated official release.
 - **Move replacement rules between Macs.** Export/import confirmed correction
   pairs as JSON, preview conflicts, skip duplicates and back up the old dictionary
   before changes. This transfer does not include custom vocabulary, models or History.
-- **Optionally polish and organize speech.** Use your own DeepSeek API key to
+- **Optionally polish and organize speech.** Choose DeepSeek, OpenAI, Anthropic
+  or Google Gemini and use your own API key to
   remove filler words and improve punctuation, wording and paragraphs. Longer
   dictation can become clear notes, with tasks, discussion points, decisions and
   follow-ups organized where appropriate. The prompt is designed to preserve
-  substantive details, original languages, uncertainty and conditions.
+  substantive details, original languages, uncertainty and conditions. Choose
+  general cleanup, meeting notes or journal mode; leave polishing off for everyday dictation.
+- **Choose how long to wait for polishing.** Set 12 (default), 30, 60 or 120 seconds.
+  This limits the cloud request after local transcription, not recording duration.
+  A timeout keeps the original text.
 - **Keep the original available.** Polishing is off by default and falls back to
   the original on errors. The latest result and saved History keep both versions;
   **Restore original** copies the original for you to paste.
@@ -55,17 +59,32 @@ review important output.
 · [English installation guide](docs/INSTALL.en.md)
 · [中文安装说明](docs/INSTALL.zh-CN.md)
 
-Download the **nibi v0.0.1 Apple Silicon DMG** from the
-[latest release](https://github.com/SleepyGab/nibi/releases/latest). It includes the
-nibi rebrand, custom vocabulary, correction dictionary and optional DeepSeek polishing.
+Download the **nibi v0.0.2-preview.1 Apple Silicon DMG** from its
+[preview release](https://github.com/SleepyGab/nibi/releases/tag/v0.0.2-preview.1).
+It includes provider selection, separate meeting/journal prompts and configurable
+polishing wait limits, alongside local dictation, vocabulary and corrections.
+The preview is built from the linked PR commit; publication does not imply the PR is merged.
 The older **Handy Local v0.9.8-local.1** preview remains available under its original
 release; it predates these additions.
 
 nibi is an **early macOS Apple Silicon preview**, **not notarized by Apple**.
 Current local builds use a stable certificate identity; older preview packages
-used ad-hoc signing. It has been tested on one Apple Silicon Mac; a second-machine
-installation still needs validation. Intel, Windows and Linux builds of this fork
+used ad-hoc signing. Hardware compatibility testing is limited. Intel, Windows and Linux builds of this fork
 have not been validated. Models are downloaded separately.
+
+Install by opening the DMG and dragging **nibi.app** onto its **Applications**
+shortcut. Eject the disk image, then launch nibi from Applications. The current
+preview uses an Apple Development certificate and has not completed Apple's
+notarization process, so first launch may require **Open Anyway** in macOS Privacy
+& Security. This approval is separate from installation and from the Microphone
+and Accessibility permissions requested by the app.
+
+Recording has no fixed timer cutoff, but reliable transcription length depends on
+the model and available memory. Parakeet Unified EN supports streaming English
+transcription; the current Qwen3-ASR and Cohere paths process the recording after
+it stops and do not automatically split long audio. Meeting mode formats completed
+transcription text; it does not add long-recording support. Hour-long meetings have
+not been validated.
 
 ## Privacy
 
@@ -74,14 +93,16 @@ inherited generic cloud post-processing/model-list calls and automatic app updat
 checks. Speech recognition, vocabulary hints and dictionary corrections run locally.
 There is no account or cloud dictionary sync.
 
-**DeepSeek text polishing is optional and off by default.** Saving a key alone
+**Text polishing is optional and off by default.** Saving a key alone
 does not enable it. When explicitly enabled, completed transcription text is sent
-to DeepSeek using your API key and billed to your account. Audio is never sent to
+to your selected provider using your API key and billed to your account. DeepSeek
+is the first suggested option; switching providers turns polishing off until you
+explicitly enable it again. Audio is never sent to
 this API. The vocabulary list is not attached to the request, but names and terms
 present in the resulting transcript are included in the text sent for polishing.
 Explicit model downloads still use the network.
 
-The API key is stored in the local settings file (restricted to the current user
+Each provider's API key is stored separately in the local settings file (restricted to the current user
 on macOS/Linux), not bundled with the app. The latest polishing result stays in
 memory until cleared or the app quits; saved History keeps both text versions.
 Audio/history storage follows the local History settings; inspect or clear it

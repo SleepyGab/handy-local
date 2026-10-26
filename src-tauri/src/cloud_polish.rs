@@ -1,4 +1,4 @@
-//! Explicitly opted-in, text-only DeepSeek polishing for Handy Local.
+//! Explicitly opted-in, text-only polishing with the user's chosen provider.
 //! The generic cloud client remains blocked by the local-only feature.
 
 use crate::settings::{get_settings, AppSettings, SETTINGS_STORE_PATH};
@@ -12,7 +12,109 @@ use tauri_plugin_store::StoreExt;
 const KEY_ID: &str = "deepseek";
 const ENDPOINT: &str = "https://api.deepseek.com/chat/completions";
 pub(crate) const PROMPT: &str = include_str!("../resources/prompts/deepseek-polish.txt");
+const MEETING_PROMPT: &str = include_str!("../resources/prompts/meeting-notes.txt");
+const JOURNAL_PROMPT: &str = include_str!("../resources/prompts/journal.txt");
 const MAX_INPUT_CHARS: usize = 20_000;
+const TIMEOUT_OPTIONS_SECONDS: [u32; 4] = [12, 30, 60, 120];
+
+pub(crate) fn default_timeout_seconds() -> u32 {
+    12
+}
+
+fn timeout_seconds(settings: &AppSettings) -> u32 {
+    let seconds = settings.cloud_polish_timeout_seconds;
+    if TIMEOUT_OPTIONS_SECONDS.contains(&seconds) {
+        seconds
+    } else {
+        default_timeout_seconds()
+    }
+}
+
+fn set_timeout_seconds(settings: &mut AppSettings, seconds: u32) -> Result<(), String> {
+    if !TIMEOUT_OPTIONS_SECONDS.contains(&seconds) {
+        return Err("invalid_timeout".into());
+    }
+    settings.cloud_polish_timeout_seconds = seconds;
+    Ok(())
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "snake_case")]
+pub enum CloudPolishProvider {
+    #[default]
+    Deepseek,
+    Openai,
+    Anthropic,
+    Gemini,
+}
+
+impl CloudPolishProvider {
+    fn id(self) -> &'static str {
+        match self {
+            Self::Deepseek => KEY_ID,
+            Self::Openai => "openai",
+            Self::Anthropic => "anthropic",
+            Self::Gemini => "gemini",
+        }
+    }
+
+    fn endpoint(self) -> &'static str {
+        match self {
+            Self::Deepseek => ENDPOINT,
+            Self::Openai => "https://api.openai.com/v1/chat/completions",
+            Self::Anthropic => "https://api.anthropic.com/v1/messages",
+            Self::Gemini => {
+                "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+            }
+        }
+    }
+
+    fn default_model(self) -> &'static str {
+        match self {
+            Self::Deepseek => "deepseek-flash",
+            Self::Openai => "gpt-6-luna",
+            Self::Anthropic => "claude-haiku-5-5",
+            Self::Gemini => "gemini-3.5-flash-lite",
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "snake_case")]
+pub enum CloudPolishMode {
+    #[default]
+    General,
+    Meeting,
+    Journal,
+}
+
+pub(crate) fn prompt(mode: CloudPolishMode) -> String {
+    // Each mode owns its structure. Inheriting General's meeting example made
+    // journal entries compete with instructions to produce decisions/actions.
+    match mode {
+        CloudPolishMode::General => PROMPT,
+        CloudPolishMode::Meeting => MEETING_PROMPT,
+        CloudPolishMode::Journal => JOURNAL_PROMPT,
+    }
+    .trim()
+    .to_owned()
+}
+
+fn model(settings: &AppSettings) -> &str {
+    settings
+        .cloud_polish_models
+        .get(settings.cloud_polish_provider.id())
+        .map(String::as_str)
+        .filter(|model| !model.trim().is_empty())
+        .unwrap_or_else(|| settings.cloud_polish_provider.default_model())
+}
+
+fn select_provider(settings: &mut AppSettings, provider: CloudPolishProvider) {
+    if settings.cloud_polish_provider != provider {
+        settings.cloud_polish_provider = provider;
+        settings.cloud_polish_enabled = false;
+    }
+}
 
 #[derive(Clone, Serialize, specta::Type)]
 pub struct LastPolish {
@@ -29,6 +131,10 @@ pub struct CloudPolishState {
 #[derive(Serialize, specta::Type)]
 pub struct CloudPolishStatus {
     pub enabled: bool,
+    pub provider: CloudPolishProvider,
+    pub mode: CloudPolishMode,
+    pub model: String,
+    pub timeout_seconds: u32,
     pub key_configured: bool,
     pub key_preview: Option<String>,
     pub last: Option<LastPolish>,
@@ -37,7 +143,7 @@ pub struct CloudPolishStatus {
 fn api_key(settings: &AppSettings) -> &str {
     settings
         .post_process_api_keys
-        .get(KEY_ID)
+        .get(settings.cloud_polish_provider.id())
         .map(|key| key.trim())
         .unwrap_or_default()
 }
@@ -62,12 +168,14 @@ fn key_preview(settings: &AppSettings) -> Option<String> {
 
 fn replace_key(settings: &mut AppSettings, key: &str) {
     if key.is_empty() {
-        settings.post_process_api_keys.remove(KEY_ID);
+        settings
+            .post_process_api_keys
+            .remove(settings.cloud_polish_provider.id());
         settings.cloud_polish_enabled = false;
     } else {
         settings
             .post_process_api_keys
-            .insert(KEY_ID.into(), key.into());
+            .insert(settings.cloud_polish_provider.id().into(), key.into());
     }
 }
 
@@ -121,6 +229,10 @@ pub fn cloud_polish_status(app: AppHandle) -> Result<CloudPolishStatus, String> 
         .clone();
     Ok(CloudPolishStatus {
         enabled: settings.cloud_polish_enabled,
+        provider: settings.cloud_polish_provider,
+        mode: settings.cloud_polish_mode,
+        model: model(&settings).to_owned(),
+        timeout_seconds: timeout_seconds(&settings),
         key_configured: !api_key(&settings).is_empty(),
         key_preview: key_preview(&settings),
         last,
@@ -142,6 +254,46 @@ pub fn set_cloud_polish_enabled(app: AppHandle, enabled: bool) -> Result<(), Str
         return Err("missing_key".into());
     }
     settings.cloud_polish_enabled = enabled;
+    save_settings(&app, settings)?;
+    let _ = app.emit("cloud-polish-changed", ());
+    Ok(())
+}
+
+/// Changing provider requires a fresh opt-in, even when its key is already saved.
+#[tauri::command]
+#[specta::specta]
+pub fn configure_cloud_polish(
+    app: AppHandle,
+    provider: Option<CloudPolishProvider>,
+    mode: Option<CloudPolishMode>,
+    model: Option<String>,
+    timeout_seconds: Option<u32>,
+) -> Result<(), String> {
+    let mut settings = get_settings(&app);
+    if let Some(seconds) = timeout_seconds {
+        set_timeout_seconds(&mut settings, seconds)?;
+    }
+    if let Some(provider) = provider {
+        select_provider(&mut settings, provider);
+    }
+    if let Some(mode) = mode {
+        settings.cloud_polish_mode = mode;
+    }
+    if let Some(model) = model {
+        let model = model.trim();
+        if model.len() > 200 || model.chars().any(|c| c.is_whitespace() || c.is_control()) {
+            return Err("invalid_model".into());
+        }
+        if model.is_empty() {
+            settings
+                .cloud_polish_models
+                .remove(settings.cloud_polish_provider.id());
+        } else {
+            settings
+                .cloud_polish_models
+                .insert(settings.cloud_polish_provider.id().into(), model.into());
+        }
+    }
     save_settings(&app, settings)?;
     let _ = app.emit("cloud-polish-changed", ());
     Ok(())
@@ -174,18 +326,45 @@ pub fn clear_last_cloud_polish(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-fn request_body(text: &str) -> serde_json::Value {
-    serde_json::json!({
-        "model": "deepseek-flash",
+fn request_body(settings: &AppSettings, text: &str) -> serde_json::Value {
+    let source = format!("<transcript>\n{text}\n</transcript>");
+    if settings.cloud_polish_provider == CloudPolishProvider::Anthropic {
+        return serde_json::json!({
+            "model": model(settings),
+            "system": prompt(settings.cloud_polish_mode),
+            "messages": [{"role": "user", "content": source}],
+            "thinking": {"type": "disabled"},
+            "max_tokens": 8192,
+            "stream": false
+        });
+    }
+    let mut body = serde_json::json!({
+        "model": model(settings),
         "messages": [
-            {"role": "system", "content": PROMPT.trim()},
-            {"role": "user", "content": format!("<transcript>\n{text}\n</transcript>")}
+            {"role": "system", "content": prompt(settings.cloud_polish_mode)},
+            {"role": "user", "content": source}
         ],
-        "thinking": {"type": "disabled"},
-        "temperature": 1.0,
-        "max_tokens": 8192,
         "stream": false
-    })
+    });
+    match settings.cloud_polish_provider {
+        CloudPolishProvider::Deepseek => {
+            body["thinking"] = serde_json::json!({"type": "disabled"});
+            body["temperature"] = serde_json::json!(1.0);
+            body["max_tokens"] = serde_json::json!(8192);
+        }
+        CloudPolishProvider::Openai => {
+            body["max_completion_tokens"] = serde_json::json!(8192);
+            if model(settings) == "gpt-6-luna" {
+                body["reasoning_effort"] = serde_json::json!("none");
+            }
+        }
+        CloudPolishProvider::Gemini => {
+            body["max_tokens"] = serde_json::json!(8192);
+            body["reasoning_effort"] = serde_json::json!("minimal");
+        }
+        CloudPolishProvider::Anthropic => unreachable!(),
+    }
+    body
 }
 
 #[derive(Deserialize)]
@@ -209,12 +388,11 @@ fn completed_text(completion: Completion) -> Result<String, &'static str> {
     if choice.finish_reason.as_deref() != Some("stop") {
         return Err("incomplete");
     }
-    let text = choice
-        .message
-        .content
-        .unwrap_or_default()
-        .trim()
-        .to_string();
+    validate_text(choice.message.content.unwrap_or_default())
+}
+
+fn validate_text(text: String) -> Result<String, &'static str> {
+    let text = text.trim().to_string();
     if text.is_empty() || text.contains("<think>") || text.contains("</think>") {
         return Err("empty_or_reasoning");
     }
@@ -225,21 +403,52 @@ async fn request_polish(
     client: &Client,
     endpoint: &str,
     key: &str,
+    settings: &AppSettings,
     text: &str,
 ) -> Result<String, &'static str> {
-    let response = client
-        .post(endpoint)
-        .bearer_auth(key)
-        .json(&request_body(text))
-        .send()
-        .await
-        .map_err(|_| "network_or_timeout")?;
+    let request = client.post(endpoint).json(&request_body(settings, text));
+    let request = if settings.cloud_polish_provider == CloudPolishProvider::Anthropic {
+        request
+            .header("x-api-key", key)
+            .header("anthropic-version", "2023-06-01")
+    } else {
+        request.bearer_auth(key)
+    };
+    let response = request.send().await.map_err(|_| "network_or_timeout")?;
     if !response.status().is_success() {
         // Never log a provider response that could echo the key or transcript.
         return Err("api_error");
     }
-    let completion = response.json().await.map_err(|_| "invalid_response")?;
-    completed_text(completion)
+    if settings.cloud_polish_provider == CloudPolishProvider::Anthropic {
+        let message: AnthropicCompletion = response.json().await.map_err(|_| "invalid_response")?;
+        if message.stop_reason.as_deref() != Some("end_turn") {
+            return Err("incomplete");
+        }
+        let text = message
+            .content
+            .into_iter()
+            .filter(|block| block.kind == "text")
+            .filter_map(|block| block.text)
+            .collect::<Vec<_>>()
+            .join("\n");
+        validate_text(text)
+    } else {
+        let completion = response.json().await.map_err(|_| "invalid_response")?;
+        completed_text(completion)
+    }
+}
+
+#[derive(Deserialize)]
+struct AnthropicCompletion {
+    stop_reason: Option<String>,
+    content: Vec<AnthropicBlock>,
+}
+
+#[derive(Deserialize)]
+struct AnthropicBlock {
+    #[serde(rename = "type")]
+    kind: String,
+    text: Option<String>,
 }
 
 fn result_snapshot(original: &str, result: Result<String, &'static str>) -> LastPolish {
@@ -262,24 +471,40 @@ pub(crate) async fn polish(app: &AppHandle, original: &str) -> Option<String> {
     } else {
         match Client::builder()
             .connect_timeout(Duration::from_secs(3))
-            .timeout(Duration::from_secs(12))
+            .timeout(Duration::from_secs(u64::from(timeout_seconds(&settings))))
             .redirect(Policy::none())
             .build()
         {
-            Ok(client) => request_polish(&client, ENDPOINT, api_key(&settings), original).await,
+            Ok(client) => {
+                request_polish(
+                    &client,
+                    settings.cloud_polish_provider.endpoint(),
+                    api_key(&settings),
+                    &settings,
+                    original,
+                )
+                .await
+            }
             Err(_) => Err("client_unavailable"),
         }
     };
     // If the user turns this off or changes the key during a request, discard
     // the result. This cannot retract text already sent, but prevents its use.
+    // A timeout preference change only affects the next request; the current
+    // request keeps the budget it started with and may still return its result.
     let current = get_settings(app);
-    let result = if !current.cloud_polish_enabled || api_key(&current) != api_key(&settings) {
+    let result = if !current.cloud_polish_enabled
+        || current.cloud_polish_provider != settings.cloud_polish_provider
+        || current.cloud_polish_mode != settings.cloud_polish_mode
+        || model(&current) != model(&settings)
+        || api_key(&current) != api_key(&settings)
+    {
         Err("settings_changed")
     } else {
         result
     };
     if let Err(reason) = &result {
-        log::warn!("DeepSeek polishing returned the original text: {reason}");
+        log::warn!("Text polishing returned the original text: {reason}");
         let _ = app.emit("cloud-polish-fallback", ());
     }
     let snapshot = result_snapshot(original, result);
@@ -304,6 +529,10 @@ mod tests {
         assert!(!settings.cloud_polish_enabled);
         let status = CloudPolishStatus {
             enabled: false,
+            provider: settings.cloud_polish_provider,
+            mode: settings.cloud_polish_mode,
+            model: model(&settings).to_owned(),
+            timeout_seconds: timeout_seconds(&settings),
             key_configured: true,
             key_preview: key_preview(&settings),
             last: None,
@@ -349,6 +578,7 @@ mod tests {
     #[test]
     fn disabled_and_legacy_settings_never_opt_in() {
         let mut settings: AppSettings = serde_json::from_str("{}").unwrap();
+        assert_eq!(timeout_seconds(&settings), 12);
         settings
             .post_process_api_keys
             .insert(KEY_ID.into(), "test-key".into());
@@ -362,8 +592,123 @@ mod tests {
     }
 
     #[test]
+    fn timeout_preferences_persist_and_reject_invalid_values_without_opting_in() {
+        let mut settings: AppSettings = serde_json::from_str("{}").unwrap();
+        for seconds in TIMEOUT_OPTIONS_SECONDS {
+            set_timeout_seconds(&mut settings, seconds).unwrap();
+            let reloaded: AppSettings =
+                serde_json::from_value(serde_json::to_value(&settings).unwrap()).unwrap();
+            assert_eq!(timeout_seconds(&reloaded), seconds);
+            assert!(!reloaded.cloud_polish_enabled);
+        }
+        for invalid in [0, 1, 13, 121, u32::MAX] {
+            assert!(set_timeout_seconds(&mut settings, invalid).is_err());
+            assert_eq!(timeout_seconds(&settings), 120);
+            settings.cloud_polish_timeout_seconds = invalid;
+            assert_eq!(timeout_seconds(&settings), 12);
+            set_timeout_seconds(&mut settings, 120).unwrap();
+        }
+    }
+
+    #[test]
+    fn providers_keep_separate_keys_and_switching_requires_fresh_opt_in() {
+        let mut settings: AppSettings = serde_json::from_str("{}").unwrap();
+        assert_eq!(
+            settings.cloud_polish_provider,
+            CloudPolishProvider::Deepseek
+        );
+        assert_eq!(settings.cloud_polish_mode, CloudPolishMode::General);
+        replace_key(&mut settings, "deepseek-credential");
+        settings.cloud_polish_enabled = true;
+        select_provider(&mut settings, CloudPolishProvider::Openai);
+        assert!(!eligible(&settings, "text"));
+        assert!(api_key(&settings).is_empty());
+        replace_key(&mut settings, "openai-credential");
+        assert!(!settings.cloud_polish_enabled);
+        settings.cloud_polish_enabled = true;
+        select_provider(&mut settings, CloudPolishProvider::Deepseek);
+        assert_eq!(api_key(&settings), "deepseek-credential");
+        assert!(!settings.cloud_polish_enabled);
+        replace_key(&mut settings, "");
+        select_provider(&mut settings, CloudPolishProvider::Openai);
+        assert_eq!(api_key(&settings), "openai-credential");
+        let reloaded: AppSettings =
+            serde_json::from_value(serde_json::to_value(&settings).unwrap()).unwrap();
+        assert_eq!(reloaded.cloud_polish_provider, CloudPolishProvider::Openai);
+        assert_eq!(api_key(&reloaded), "openai-credential");
+        assert!(!reloaded.cloud_polish_enabled);
+    }
+
+    #[test]
+    fn providers_route_each_modes_prompt_through_their_own_protocol() {
+        let mut settings = AppSettings::default();
+        for provider in [
+            CloudPolishProvider::Deepseek,
+            CloudPolishProvider::Openai,
+            CloudPolishProvider::Anthropic,
+            CloudPolishProvider::Gemini,
+        ] {
+            select_provider(&mut settings, provider);
+            for (mode, expected) in [
+                (CloudPolishMode::General, PROMPT),
+                (CloudPolishMode::Meeting, MEETING_PROMPT),
+                (CloudPolishMode::Journal, JOURNAL_PROMPT),
+            ] {
+                settings.cloud_polish_mode = mode;
+                let body = request_body(&settings, "原文");
+                assert_eq!(body["model"], provider.default_model());
+                let user_message = if provider == CloudPolishProvider::Anthropic {
+                    assert_eq!(body["system"], expected.trim());
+                    &body["messages"][0]
+                } else {
+                    if provider != CloudPolishProvider::Deepseek {
+                        assert!(body.get("thinking").is_none());
+                    }
+                    assert_eq!(body["messages"][0]["role"], "system");
+                    assert_eq!(body["messages"][0]["content"], expected.trim());
+                    &body["messages"][1]
+                };
+                assert_eq!(user_message["role"], "user");
+                assert_eq!(user_message["content"], "<transcript>\n原文\n</transcript>");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn anthropic_auth_and_only_complete_text_blocks_are_accepted() {
+        let client = Client::new();
+        let settings = AppSettings {
+            cloud_polish_provider: CloudPolishProvider::Anthropic,
+            ..AppSettings::default()
+        };
+        for (body, expected) in [
+            (
+                r#"{"stop_reason":"end_turn","content":[{"type":"thinking","thinking":"hidden"},{"type":"text","text":"整理后的文字。"}]}"#,
+                Ok("整理后的文字。"),
+            ),
+            (
+                r#"{"stop_reason":"max_tokens","content":[{"type":"text","text":"partial"}]}"#,
+                Err("incomplete"),
+            ),
+            (
+                r#"{"stop_reason":"end_turn","content":[{"type":"thinking"}]}"#,
+                Err("empty_or_reasoning"),
+            ),
+        ] {
+            let (url, worker) = mock_server("200 OK", body, Duration::ZERO);
+            let result =
+                request_polish(&client, &url, "test-anthropic-key", &settings, "文字").await;
+            assert_eq!(result.as_deref(), expected.as_deref());
+            let request = worker.join().unwrap().to_lowercase();
+            assert!(request.contains("x-api-key: test-anthropic-key"));
+            assert!(request.contains("anthropic-version: 2023-06-01"));
+            assert!(!request.contains("authorization:"));
+        }
+    }
+
+    #[test]
     fn request_is_text_only_with_thinking_disabled() {
-        let body = request_body("中文 PR，不要 merge。");
+        let body = request_body(&AppSettings::default(), "中文 PR，不要 merge。");
         assert_eq!(body["model"], "deepseek-flash");
         assert_eq!(body["thinking"]["type"], "disabled");
         assert_eq!(
@@ -445,7 +790,14 @@ mod tests {
         );
         let result = result_snapshot(
             "整理前的文字",
-            request_polish(&client, &url, "fake-key", "整理前的文字").await,
+            request_polish(
+                &client,
+                &url,
+                "fake-key",
+                &AppSettings::default(),
+                "整理前的文字",
+            )
+            .await,
         );
         assert_eq!(result.original, "整理前的文字");
         assert_eq!(result.polished.as_deref(), Some("整理后的文字。"));
@@ -459,7 +811,7 @@ mod tests {
             let (url, worker) = mock_server(status, body, delay);
             let result = result_snapshot(
                 "原文",
-                request_polish(&client, &url, "fake-key", "原文").await,
+                request_polish(&client, &url, "fake-key", &AppSettings::default(), "原文").await,
             );
             assert!(result.fallback);
             assert_eq!(result.original, "原文");
@@ -482,6 +834,7 @@ mod tests {
             &client,
             ENDPOINT,
             &key,
+            &AppSettings::default(),
             "嗯这个 PR 先不要 merge 等 CI 全绿了再说",
         )
         .await

@@ -27,6 +27,17 @@ async setCloudPolishEnabled(enabled: boolean) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Changing provider requires a fresh opt-in, even when its key is already saved.
+ */
+async configureCloudPolish(provider: CloudPolishProvider | null, mode: CloudPolishMode | null, model: string | null, timeoutSeconds: number | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("configure_cloud_polish", { provider, mode, model, timeoutSeconds }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async setCloudPolishKey(key: string) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("set_cloud_polish_key", { key }) };
@@ -1065,9 +1076,13 @@ whats_new_last_seen_version?: string; selected_model?: string; onboarding_comple
  */
 selected_channel?: number | null; clamshell_microphone?: string | null; selected_output_device?: string | null; translate_to_english?: boolean; selected_language?: string; overlay_position?: OverlayPosition; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean;
 /**
- * Explicit opt-in for DeepSeek text-only polishing, independent of legacy shortcuts.
+ * Explicit opt-in for text-only polishing, independent of legacy shortcuts.
  */
-cloud_polish_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number;
+cloud_polish_enabled?: boolean; cloud_polish_provider?: CloudPolishProvider; cloud_polish_mode?: CloudPolishMode; cloud_polish_models?: Partial<{ [key in string]: string }>;
+/**
+ * Maximum wait for the text polishing request, not a recording limit.
+ */
+cloud_polish_timeout_seconds?: number; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number;
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a
@@ -1109,7 +1124,9 @@ export type ChineseScript =
  */
 "as_transcribed" | "simplified" | "traditional"
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
-export type CloudPolishStatus = { enabled: boolean; key_configured: boolean; key_preview: string | null; last: LastPolish | null }
+export type CloudPolishMode = "general" | "meeting" | "journal"
+export type CloudPolishProvider = "deepseek" | "openai" | "anthropic" | "gemini"
+export type CloudPolishStatus = { enabled: boolean; provider: CloudPolishProvider; mode: CloudPolishMode; model: string; timeout_seconds: number; key_configured: boolean; key_preview: string | null; last: LastPolish | null }
 export type CustomSounds = { start: boolean; stop: boolean }
 export type EngineType =
 /**

@@ -801,23 +801,23 @@
   },
   "cloudPolish": {
     "title": "文字润色",
-    "description": "在本地语音识别完成后，可选用 DeepSeek 去除口头语、调整标点和分段，尽量保留原意。",
-    "enable": "使用 DeepSeek 润色转录文字",
-    "privacy": "默认关闭。开启后，将使用你的 API key 把转录文字发送给 DeepSeek；录音留在本机。润色失败时使用原文。",
-    "apiKey": "DeepSeek API key",
-    "keyPlaceholder": "粘贴你的 DeepSeek API key",
+    "description": "本地语音识别后的可选整理。日常听写保持关闭；需要会议记录或日记时，再开启润色。",
+    "enable": "开启文字润色",
+    "privacy": "默认关闭。开启后，使用你的 API key 将转录文字发送给 {{provider}}；录音留在本机。润色失败时使用原文。",
+    "apiKey": "{{provider}} API key",
+    "keyPlaceholder": "粘贴你的 {{provider}} API key",
     "keyReplace": "输入新 key 以替换已保存的 key",
     "keyConfigured": "上方是已保存的 key。如需替换，请在这里输入新的 key。",
     "keyMissing": "请先保存自己的 API key，再开启润色。",
     "saveKey": "保存 key",
     "removeKey": "移除 key",
-    "model": "DeepSeek Flash · 已关闭思考 · 费用由你的 DeepSeek 账户承担",
+    "model": "模型",
     "keySaved": "Key 已保存。请使用上方开关选择是否开启润色。",
     "keyRemoved": "Key 已移除，润色已关闭。",
-    "enabledNotice": "润色已开启。后续转录文字会发送给 DeepSeek。",
+    "enabledNotice": "润色已开启。后续转录文字会发送给 {{provider}}。",
     "disabledNotice": "润色已关闭。后续转录只在本地处理。",
     "loadError": "无法加载润色设置，请重新打开此页面。",
-    "saveError": "保存失败，请检查 key 后重试。",
+    "saveError": "保存失败，请重试。",
     "copyError": "复制失败，请重试。",
     "originalCopied": "原文已复制，可粘贴替换整理后的内容。",
     "resultCopied": "润色结果已复制。",
@@ -833,15 +833,67 @@
     "noLast": "本次启动后还没有整理结果。",
     "showOriginal": "查看原文",
     "showResult": "查看润色结果",
-    "savedKey": "已保存的 DeepSeek key",
+    "savedKey": "已保存的 {{provider}} key",
     "showKey": "显示 key",
     "hideKey": "隐藏 key",
-    "savedKeyHelp": "本机只保存一个 DeepSeek key。保存新 key 会替换旧 key；移除会清除已保存的 key，并关闭润色。",
-    "revealError": "无法显示已保存的 key，请重试。"
+    "savedKeyHelp": "各平台的 key 分别保存在本机。替换或移除此 key 不影响其他平台；移除后会关闭润色。",
+    "revealError": "无法显示已保存的 key，请重试。",
+    "toggleHelp": "日常保持关闭 · 需要整理内容时再开启",
+    "on": "已开启",
+    "off": "已关闭",
+    "modelHelp": "已预填轻量模型。可输入 {{provider}} 支持的其他模型 ID；清空并保存可恢复默认。费用直接由你的平台账户承担。",
+    "saveModel": "保存模型",
+    "modelSaved": "模型已保存。",
+    "provider": "AI 服务平台",
+    "providerHelp": "使用你自己的 API key。nibi 不提供或转售 AI 服务。切换平台后润色会关闭，需要时请重新开启。",
+    "providerSaved": "平台已切换，润色已关闭。需要时请重新开启。",
+    "mode": "整理模式",
+    "modeSaved": "整理模式已保存。",
+    "timeout": "润色最长等待时间",
+    "timeoutDefault": "{{seconds}} 秒（默认）",
+    "timeoutSeconds": "{{seconds}} 秒",
+    "timeoutHelp": "本地转写完成后，等待 AI 返回结果的最长时间，不是录音时长限制。长文本或较慢模型可调大；超时则使用原文。修改从下一次润色开始生效。",
+    "timeoutSaved": "已保存润色等待时间。",
+    "providers": {
+      "deepseek": {
+        "name": "DeepSeek",
+        "option": "DeepSeek · 建议先试",
+        "description": "DeepSeek V4.1 Flash 1017（deepseek-flash），低成本起点，已关闭思考。"
+      },
+      "openai": {
+        "name": "OpenAI",
+        "option": "OpenAI",
+        "description": "预填 GPT-6 Luna，已关闭思考，适合低成本文字整理。"
+      },
+      "anthropic": {
+        "name": "Anthropic",
+        "option": "Anthropic · Claude",
+        "description": "预填 Claude Haiku 5.5，可作为低成本、快速的文字整理选项。"
+      },
+      "gemini": {
+        "name": "Google Gemini",
+        "option": "Google · Gemini",
+        "description": "预填 Gemini 3.5 Flash-Lite，另一个轻量模型选择。"
+      }
+    },
+    "modes": {
+      "general": {
+        "name": "普通整理",
+        "description": "去除口头语，调整标点和结构，保留原意。"
+      },
+      "meeting": {
+        "name": "会议模式",
+        "description": "整理讨论、决定和后续行动，按主题保留依据、分歧和待确认问题。负责人和时间只采用原文明确提到的信息。"
+      },
+      "journal": {
+        "name": "日记模式",
+        "description": "把口述想法整理成自然段落，保留你的口吻、感受、犹豫和时间顺序，不添加建议或原文没有的感悟。"
+      }
+    }
   },
   "dictionary": {
     "title": "词典",
-    "privacy": "词汇提示和替换规则保存在本机，并在本地执行。开启云端润色时，处理后的转写文字会发送给 DeepSeek。",
+    "privacy": "词汇提示和替换规则保存在本机，并在本地执行。开启文字润色时，处理后的转写文字会发送给你选择的 AI 平台。",
     "vocabulary": "自定义词汇",
     "description": "直接添加名称或术语的正确写法。Qwen3-ASR 和 Whisper 会在本地识别时参考这些词；其他模型仅支持英文词的近似纠错。词汇提示可帮助识别，但不保证每次正确。",
     "word": "词语或短语",
