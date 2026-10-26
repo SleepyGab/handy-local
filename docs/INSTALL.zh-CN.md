@@ -9,15 +9,18 @@
 旧版 Handy Local 仍保留在历史 Release 中，以下步骤针对 nibi。
 源码构建方法见 [Build nibi](../README.md#build-nibi)。
 
-1. 打开 DMG，将 **nibi.app** 拖到 **Applications（应用程序）**，再推出安装磁盘。
+1. 打开 DMG，将 **nibi.app** 拖到其中的 **Applications（应用程序）文件夹快捷方式**。
+   这就是标准的拖拽安装步骤；复制完成后再推出安装磁盘。
    从应用程序打开 nibi；先退出占用 Fn 的原版 Handy/Wispr Flow。
    替换已有版本时，先退出 nibi，再复制新应用。
-2. 当前是本地签名的预览版，尚未经过 Apple 公证。若系统阻止打开，确认文件来自维护者或
+2. 当前预览版使用 Apple Development 开发证书签名，尚未经过 Apple 公证。
+   复制应用不等于获得系统的安全放行。若系统阻止打开，确认文件来自维护者或
    本项目 Release 后，由你本人到 **系统设置 → 隐私与安全性 → 仍要打开（Open Anyway）**。
    不需要关闭整个系统的安全检查。若提示文件损坏或含恶意软件，请停止并重新核对下载文件。
    Apple 说明：https://support.apple.com/en-us/102445
-3. 允许 **麦克风** 和 **辅助功能**。部分 macOS 将后者称作“Device Control and Data Access”。
-   它们用于录音、读取刚输入的文本框和填入文字。完成后退出并重新打开 nibi。
+3. 应用打开后，允许 **麦克风** 和 **辅助功能**。部分 macOS 将后者称作“Device Control and Data Access”。
+   它们用于录音、读取刚输入的文本框和填入文字，与允许打开应用是不同的授权。
+   完成后退出并重新打开 nibi。
 4. 在 **Models（模型）** 下载 **Qwen3-ASR 1.7B**，如可选量化则选 **Q5_K_M**，并选为当前模型。
    模型约 1.5 GB，安装包不包含它。首次下载需要网络，下载完成后的语音转写在本机运行。
    也可以下载多个本地模型，再选择当前使用哪一个。

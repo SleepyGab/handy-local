@@ -10,17 +10,21 @@ polishing wait limits. This preview corresponds to the PR commit linked on the r
 The older Handy Local preview remains available in the release history; the steps
 below describe nibi. To build from source, see [Build nibi](../README.md#build-nibi).
 
-1. Open the DMG, drag **nibi.app** into **Applications**, then eject the DMG.
+1. Open the DMG and drag **nibi.app** onto its **Applications** folder shortcut.
+   This copies the app into Applications; it is the standard drag-and-drop install step.
+   Eject the DMG when copying finishes.
    Launch the copy in Applications. Quit original Handy/Wispr Flow if they use Fn.
    When replacing an existing installation, quit nibi before copying the new app.
-2. This local preview is signed, but not Apple-notarized. If macOS blocks it, confirm
+2. This preview uses an Apple Development certificate and is not Apple-notarized.
+   Copying the app does not grant security approval. If macOS blocks it, confirm
    that it came from the maintainer/release page, then use **System Settings →
    Privacy & Security → Open Anyway** yourself. Do not disable Gatekeeper globally.
    If macOS reports damage or malware, stop and obtain a verified copy.
    Apple's guidance: https://support.apple.com/en-us/102445
-3. Allow **Microphone** and **Accessibility** (called **Device Control and Data
+3. After the app opens, allow **Microphone** and **Accessibility** (called **Device Control and Data
    Access** on some macOS versions). These allow recording, observing the last
-   dictated text field and inserting text. Restart nibi after permission setup.
+   dictated text field and inserting text. These are separate from macOS approval
+   to open the app. Restart nibi after permission setup.
 4. In **Models**, download **Qwen3-ASR 1.7B**, choosing **Q5_K_M** when quantization
    is offered, then select it as the active model. The model is about 1.5 GB and
    is NOT included in the installer. Download requires internet; dictation afterward
@@ -41,7 +45,7 @@ below describe nibi. To build from source, see [Build nibi](../README.md#build-n
 
 Optional: enable launch at login, start hidden, and unload the model after 5 minutes
 in nibi's settings. A fresh installation has its own preferences and empty dictionary;
-this package does not copy the developer's settings, recordings or remembered words.
+the installer contains no preconfigured personal data.
 
 Speech recognition and dictionary corrections are local. **Text polishing** is
 optional and off by default. Leave it off for everyday dictation. Choose DeepSeek

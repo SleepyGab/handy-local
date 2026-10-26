@@ -3,8 +3,7 @@
 Local voice dictation for macOS, with custom vocabulary, a correction dictionary,
 and optional text polishing with your choice of AI provider.
 
-按住快捷键说话，松开即可输入。支持本地语音识别、自定义词汇、确认后记住纠正，
-以及可选的多平台文字润色与长口述整理。
+[English installation guide](docs/INSTALL.en.md) · [中文安装说明](docs/INSTALL.zh-CN.md)
 
 nibi (formerly Handy Local) is an independent community fork of
 [Handy](https://github.com/cjpais/Handy), originally based on **v0.9.8**.
@@ -70,9 +69,15 @@ release; it predates these additions.
 
 nibi is an **early macOS Apple Silicon preview**, **not notarized by Apple**.
 Current local builds use a stable certificate identity; older preview packages
-used ad-hoc signing. It has been tested on one Apple Silicon Mac; a second-machine
-installation still needs validation. Intel, Windows and Linux builds of this fork
+used ad-hoc signing. Hardware compatibility testing is limited. Intel, Windows and Linux builds of this fork
 have not been validated. Models are downloaded separately.
+
+Install by opening the DMG and dragging **nibi.app** onto its **Applications**
+shortcut. Eject the disk image, then launch nibi from Applications. The current
+preview uses an Apple Development certificate and has not completed Apple's
+notarization process, so first launch may require **Open Anyway** in macOS Privacy
+& Security. This approval is separate from installation and from the Microphone
+and Accessibility permissions requested by the app.
 
 Recording has no fixed timer cutoff, but reliable transcription length depends on
 the model and available memory. Parakeet Unified EN supports streaming English
