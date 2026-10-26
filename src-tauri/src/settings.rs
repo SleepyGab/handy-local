@@ -457,9 +457,18 @@ pub struct AppSettings {
     pub auto_submit_key: AutoSubmitKey,
     #[serde(default = "default_post_process_enabled")]
     pub post_process_enabled: bool,
-    /// Explicit opt-in for DeepSeek text-only polishing, independent of legacy shortcuts.
+    /// Explicit opt-in for text-only polishing, independent of legacy shortcuts.
     #[serde(default)]
     pub cloud_polish_enabled: bool,
+    #[serde(default)]
+    pub cloud_polish_provider: crate::cloud_polish::CloudPolishProvider,
+    #[serde(default)]
+    pub cloud_polish_mode: crate::cloud_polish::CloudPolishMode,
+    #[serde(default)]
+    pub cloud_polish_models: HashMap<String, String>,
+    /// Maximum wait for the text polishing request, not a recording limit.
+    #[serde(default = "crate::cloud_polish::default_timeout_seconds")]
+    pub cloud_polish_timeout_seconds: u32,
     #[serde(default = "default_post_process_provider_id")]
     pub post_process_provider_id: String,
     #[serde(default = "default_post_process_providers")]
@@ -968,6 +977,10 @@ pub fn get_default_settings() -> AppSettings {
         auto_submit_key: AutoSubmitKey::default(),
         post_process_enabled: default_post_process_enabled(),
         cloud_polish_enabled: false,
+        cloud_polish_provider: Default::default(),
+        cloud_polish_mode: Default::default(),
+        cloud_polish_models: HashMap::new(),
+        cloud_polish_timeout_seconds: crate::cloud_polish::default_timeout_seconds(),
         post_process_provider_id: default_post_process_provider_id(),
         post_process_providers: default_post_process_providers(),
         post_process_api_keys: default_post_process_api_keys(),

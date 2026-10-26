@@ -1,11 +1,12 @@
 # nibi 简单安装说明
 
-当前源码版本为 nibi v0.0.1，适用于 Apple Silicon Mac。
+当前源码版本为 nibi v0.0.2-preview.1，适用于 Apple Silicon Mac。
 建议使用较新的 macOS；尚未验证旧版 macOS 和 Intel 机型。
 
-从[最新 Release](https://github.com/SleepyGab/nibi/releases/latest) 下载
-**nibi-v0.0.1-macos-apple-silicon.dmg**，包含 nibi 品牌、自定义词汇、纠正词典和可选的
-DeepSeek 文字润色。旧版 Handy Local 仍保留在历史 Release 中，以下步骤针对 nibi。
+从[预览版 Release](https://github.com/SleepyGab/nibi/releases/tag/v0.0.2-preview.1) 下载
+**nibi-v0.0.2-preview.1-macos-apple-silicon.dmg**，包含多平台润色、独立的会议/日记提示词和可调的润色等待时间。
+此预览版对应 Release 页面链接的 PR 提交，发布安装包不代表 PR 已合并。
+旧版 Handy Local 仍保留在历史 Release 中，以下步骤针对 nibi。
 源码构建方法见 [Build nibi](../README.md#build-nibi)。
 
 1. 打开 DMG，将 **nibi.app** 拖到 **Applications（应用程序）**，再推出安装磁盘。
@@ -34,14 +35,25 @@ DeepSeek 文字润色。旧版 Handy Local 仍保留在历史 Release 中，以�
 在 **Dictionary → Custom vocabulary（词典 → 自定义词汇）** 中可直接添加人名、术语的正确
 拼写，作为本地识别提示，不必先输入错词；提示不能保证识别结果。
 
-语音识别与词典纠正在本地处理。“文字润色”默认关闭；在设置中保存自己的 DeepSeek API key
-后，主动开启才会发送转录文字，录音不会上传。较长口述可按内容整理为笔记、任务清单，
-或分开呈现讨论、决定和后续行动；重要内容请核对结果。
-“已保存的 DeepSeek key”区域显示遮罩和末尾四位，可点击“显示 key”查看全文，或用
-“移除 key”清除并关闭润色。本机只保存一个 DeepSeek key，保存新 key 会替换旧 key。
+语音识别与词典纠正在本地处理。“文字润色”默认关闭，日常听写可以保持关闭。
+在设置中选择 DeepSeek（首个建议选项）、OpenAI、Anthropic 或 Google Gemini，
+保存自己的 API key 后，主动开启才会将转录文字发送给所选平台，录音不会上传。
+可选择普通整理、会议模式或日记模式；模型已预填，也可改为平台支持的其他模型 ID。
+重要内容请核对结果。
+普通整理沿用现有听写整理逻辑；会议模式按主题整理讨论、决定和有依据的待办；
+日记模式保留说话者语气，以自然段落组织内容。各模式都要求不补写缺失事实。
+“润色最长等待时间”可选 12 秒（默认）、30 秒、60 秒或 120 秒，从本地转写完成后
+发送云端请求时开始计算，对下一次请求生效。这不是录音时长限制；超时会保留原文。
+“已保存的 key”区域显示遮罩和末尾四位，可点击“显示 key”查看全文，或用
+“移除 key”清除并关闭润色。各平台分别保存 key，替换一个不会影响其他平台。
+切换平台后润色会关闭，需要时请重新开启。
 润色失败时返回原文。“最近一次整理”和
 历史记录中的“恢复原文”会复制原文，供你粘贴替换。模型下载需要网络，目标聊天软件也可能自行发送你输入的文字。
 若不希望备份同步上云，请把导出文件保存到非 iCloud/Dropbox 的本地文件夹。
+
+录音没有固定的计时停止上限，但长录音能否完整转写取决于本地模型。Parakeet Unified EN
+可边录边转写英语；Qwen3-ASR 和 Cohere 当前在停止后处理整段音频，尚未加入长音频自动分段。
+会议模式只整理已有转写文字，一小时会议的完整转写尚未验证。
 
 从旧的临时签名切换到固定证书时，可能需要重新授予一次权限。如果辅助功能开关已开启但仍不工作，可移除旧的
 nibi 条目，重新添加应用程序中的 nibi，然后重启应用。

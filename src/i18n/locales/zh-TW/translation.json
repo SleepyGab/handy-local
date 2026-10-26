@@ -801,23 +801,23 @@
   },
   "cloudPolish": {
     "title": "文字潤飾",
-    "description": "在本機語音辨識完成後，可選用 DeepSeek 去除口頭語、調整標點和分段，盡量保留原意。",
-    "enable": "使用 DeepSeek 潤飾轉錄文字",
-    "privacy": "預設關閉。開啟後，將使用你的 API key 把轉錄文字傳送給 DeepSeek；錄音留在本機。潤飾失敗時使用原文。",
-    "apiKey": "DeepSeek API key",
-    "keyPlaceholder": "貼上你的 DeepSeek API key",
+    "description": "本機語音辨識後的選用整理功能。日常聽寫保持關閉；需要會議記錄或日記時，再開啟潤飾。",
+    "enable": "開啟文字潤飾",
+    "privacy": "預設關閉。開啟後，使用你的 API key 將轉錄文字傳送給 {{provider}}；錄音留在本機。潤飾失敗時使用原文。",
+    "apiKey": "{{provider}} API key",
+    "keyPlaceholder": "貼上你的 {{provider}} API key",
     "keyReplace": "輸入新 key 以取代已儲存的 key",
     "keyConfigured": "上方是已儲存的 key。如需取代，請在此輸入新的 key。",
     "keyMissing": "請先儲存自己的 API key，再開啟潤飾。",
     "saveKey": "儲存 key",
     "removeKey": "移除 key",
-    "model": "DeepSeek Flash · 已關閉思考 · 費用由你的 DeepSeek 帳戶負擔",
+    "model": "模型",
     "keySaved": "Key 已儲存。請使用上方開關選擇是否開啟潤飾。",
     "keyRemoved": "Key 已移除，潤飾已關閉。",
-    "enabledNotice": "潤飾已開啟。後續轉錄文字會傳送給 DeepSeek。",
+    "enabledNotice": "潤飾已開啟。後續轉錄文字會傳送給 {{provider}}。",
     "disabledNotice": "潤飾已關閉。後續轉錄只在本機處理。",
     "loadError": "無法載入潤飾設定，請重新開啟此頁面。",
-    "saveError": "儲存失敗，請檢查 key 後重試。",
+    "saveError": "儲存失敗，請重試。",
     "copyError": "複製失敗，請重試。",
     "originalCopied": "原文已複製，可貼上取代整理後的內容。",
     "resultCopied": "潤飾結果已複製。",
@@ -833,15 +833,67 @@
     "noLast": "本次啟動後還沒有整理結果。",
     "showOriginal": "檢視原文",
     "showResult": "檢視潤飾結果",
-    "savedKey": "已儲存的 DeepSeek key",
+    "savedKey": "已儲存的 {{provider}} key",
     "showKey": "顯示 key",
     "hideKey": "隱藏 key",
-    "savedKeyHelp": "此裝置只儲存一個 DeepSeek key。儲存新 key 會取代舊 key；移除會清除已儲存的 key，並關閉潤飾。",
-    "revealError": "無法顯示已儲存的 key，請重試。"
+    "savedKeyHelp": "各平台的 key 分別儲存在本機。替換或移除此 key 不影響其他平台；移除後會關閉潤飾。",
+    "revealError": "無法顯示已儲存的 key，請重試。",
+    "toggleHelp": "日常保持關閉 · 需要整理內容時再開啟",
+    "on": "已開啟",
+    "off": "已關閉",
+    "modelHelp": "已預填輕量模型。可輸入 {{provider}} 支援的其他模型 ID；清空並儲存可恢復預設。費用直接由你的平台帳戶承擔。",
+    "saveModel": "儲存模型",
+    "modelSaved": "模型已儲存。",
+    "provider": "AI 服務平台",
+    "providerHelp": "使用你自己的 API key。nibi 不提供或轉售 AI 服務。切換平台後潤飾會關閉，需要時請重新開啟。",
+    "providerSaved": "平台已切換，潤飾已關閉。需要時請重新開啟。",
+    "mode": "整理模式",
+    "modeSaved": "整理模式已儲存。",
+    "timeout": "潤色最長等待時間",
+    "timeoutDefault": "{{seconds}} 秒（預設）",
+    "timeoutSeconds": "{{seconds}} 秒",
+    "timeoutHelp": "本機轉寫完成後，等待 AI 回傳結果的最長時間，不是錄音時長限制。長文字或較慢模型可調大；逾時則使用原文。修改從下一次潤色開始生效。",
+    "timeoutSaved": "已儲存潤色等待時間。",
+    "providers": {
+      "deepseek": {
+        "name": "DeepSeek",
+        "option": "DeepSeek · 建議先試",
+        "description": "DeepSeek V4.1 Flash 1017（deepseek-flash），低成本起點，已關閉思考。"
+      },
+      "openai": {
+        "name": "OpenAI",
+        "option": "OpenAI",
+        "description": "預填 GPT-6 Luna，已關閉思考，適合低成本文字整理。"
+      },
+      "anthropic": {
+        "name": "Anthropic",
+        "option": "Anthropic · Claude",
+        "description": "預填 Claude Haiku 5.5，可作為低成本、快速的文字整理選項。"
+      },
+      "gemini": {
+        "name": "Google Gemini",
+        "option": "Google · Gemini",
+        "description": "預填 Gemini 3.5 Flash-Lite，另一個輕量模型選擇。"
+      }
+    },
+    "modes": {
+      "general": {
+        "name": "一般整理",
+        "description": "去除口頭語，調整標點和結構，保留原意。"
+      },
+      "meeting": {
+        "name": "會議模式",
+        "description": "整理討論、決定和後續行動，按主題保留依據、分歧和待確認問題。負責人和時間只採用原文明確提到的資訊。"
+      },
+      "journal": {
+        "name": "日記模式",
+        "description": "把口述想法整理成自然段落，保留你的口吻、感受、猶豫和時間順序，不添加建議或原文沒有的感悟。"
+      }
+    }
   },
   "dictionary": {
     "title": "詞典",
-    "privacy": "詞彙提示和替換規則儲存在本機，並在本機執行。開啟雲端潤飾時，處理後的轉寫文字會傳送給 DeepSeek。",
+    "privacy": "詞彙提示與替換規則儲存在本機，並在本機執行。開啟文字潤飾時，處理後的轉錄文字會傳送給你選擇的 AI 平台。",
     "vocabulary": "自訂詞彙",
     "description": "直接新增名稱或術語的正確寫法。Qwen3-ASR 和 Whisper 會在本機辨識時參考這些詞；其他模型僅支援英文詞的近似更正。詞彙提示可協助辨識，但不保證每次正確。",
     "word": "詞語或短語",

@@ -1,11 +1,12 @@
 # nibi — Apple Silicon installation
 
-Current source: nibi v0.0.1, for Apple Silicon Macs. Use a recent macOS version;
+Current source: nibi v0.0.2-preview.1, for Apple Silicon Macs. Use a recent macOS version;
 older macOS and Intel have not been validated.
 
-Download **nibi-v0.0.1-macos-apple-silicon.dmg** from the
-[latest release](https://github.com/SleepyGab/nibi/releases/latest).
-It includes the nibi rebrand, custom vocabulary and optional DeepSeek polishing.
+Download **nibi-v0.0.2-preview.1-macos-apple-silicon.dmg** from the
+[preview release](https://github.com/SleepyGab/nibi/releases/tag/v0.0.2-preview.1).
+It includes provider selection, separate meeting/journal prompts and configurable
+polishing wait limits. This preview corresponds to the PR commit linked on the release page.
 The older Handy Local preview remains available in the release history; the steps
 below describe nibi. To build from source, see [Build nibi](../README.md#build-nibi).
 
@@ -43,17 +44,30 @@ in nibi's settings. A fresh installation has its own preferences and empty dicti
 this package does not copy the developer's settings, recordings or remembered words.
 
 Speech recognition and dictionary corrections are local. **Text polishing** is
-optional and off by default: save your own DeepSeek API key in settings, then
-explicitly enable it to send transcription text (never audio) to DeepSeek.
-Polishing can also organize longer dictation into notes, task lists, or discussion,
-decision and action lists where appropriate. Review important output for accuracy.
+optional and off by default. Leave it off for everyday dictation. Choose DeepSeek
+(the first suggestion), OpenAI, Anthropic or Google Gemini, save your own API key,
+then explicitly enable it to send transcription text (never audio) to that provider.
+Choose general cleanup, meeting notes or journal mode. The model is pre-filled
+and can be changed to another supported model ID. Review important output for accuracy.
+General cleanup preserves the existing dictation cleanup behavior. Meeting notes
+organize topics, decisions and supported action items; Journal keeps the speaker's
+voice in natural paragraphs. Both prompts instruct the model to avoid inventing details.
+**Polishing wait limit** offers 12 (default), 30, 60 or 120 seconds, starting when
+the cloud request is sent after local transcription. It applies to the next request
+and does not limit how long you can record. A timeout keeps the original text.
 The saved-key card shows a masked key and its final four characters. **Show key**
-reveals it on request; **Remove key** deletes it and turns polishing off. Only one
-DeepSeek key is stored, and saving another replaces it.
+reveals it on request; **Remove key** deletes it and turns polishing off. Each
+provider has a separate saved key. Replacing one does not affect other providers.
+Switching providers turns polishing off until you explicitly enable it again.
 Errors fall back to the original. **Restore original** in the latest result or
 History copies the original for you to paste. Explicit model downloads use the
 network, and the app you dictate into may itself send text online. For local-only
 backups, save exported dictionaries outside cloud-synced folders.
+
+There is no fixed recording timer cutoff. Long-recording reliability still depends
+on the local model: Parakeet Unified EN streams English; Qwen3-ASR and Cohere currently
+process audio after stopping without automatic long-audio splitting. Meeting mode
+only formats the resulting text. Hour-long meeting transcription has not been validated.
 
 Updates use the same app data. Moving from an older ad-hoc preview to a certificate
 identity may require re-granting permissions once. If an enabled Accessibility entry is stale, remove

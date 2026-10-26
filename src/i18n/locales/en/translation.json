@@ -801,23 +801,23 @@
   },
   "cloudPolish": {
     "title": "Text polishing",
-    "description": "Optional DeepSeek polishing after local speech recognition. It removes filler words and improves punctuation and paragraphs while preserving your meaning.",
-    "enable": "Polish transcriptions with DeepSeek",
-    "privacy": "Off by default. When enabled, transcription text is sent to DeepSeek using your API key. Audio stays on your device. If polishing fails, nibi uses the original text.",
-    "apiKey": "DeepSeek API key",
-    "keyPlaceholder": "Paste your DeepSeek API key",
+    "description": "Optional writing help after local speech recognition. For everyday dictation, leave it off; turn it on when you want meeting notes or a journal entry.",
+    "enable": "Enable text polishing",
+    "privacy": "Off by default. When enabled, transcription text is sent to {{provider}} with your API key. Audio stays on your device. If polishing fails, nibi uses the original text.",
+    "apiKey": "{{provider}} API key",
+    "keyPlaceholder": "Paste your {{provider}} API key",
     "keyReplace": "Enter a new key to replace the saved key",
     "keyConfigured": "A key is saved above. Enter a new key below only to replace it.",
     "keyMissing": "Save your own API key before enabling polishing.",
     "saveKey": "Save key",
     "removeKey": "Remove key",
-    "model": "DeepSeek Flash · thinking disabled · billed to your DeepSeek account",
+    "model": "Model",
     "keySaved": "Key saved. Use the switch above to choose whether to enable polishing.",
     "keyRemoved": "Key removed and polishing disabled.",
-    "enabledNotice": "Polishing is on. Future transcriptions will send text to DeepSeek.",
+    "enabledNotice": "Polishing is on. Future transcriptions will send text to {{provider}}.",
     "disabledNotice": "Polishing is off. Future transcriptions stay local.",
     "loadError": "Could not load polishing settings. Reopen this page to try again.",
-    "saveError": "Could not save the change. Check your key and try again.",
+    "saveError": "Could not save the change. Please try again.",
     "copyError": "Could not copy the text. Try again.",
     "originalCopied": "Original text copied. Paste it to replace the polished result.",
     "resultCopied": "Polished text copied.",
@@ -833,15 +833,67 @@
     "noLast": "No polishing result in this session yet.",
     "showOriginal": "Show original",
     "showResult": "Show polished text",
-    "savedKey": "Saved DeepSeek key",
+    "savedKey": "Saved {{provider}} key",
     "showKey": "Show key",
     "hideKey": "Hide key",
-    "savedKeyHelp": "One DeepSeek key is stored on this device. Saving a new key replaces the previous one. Removing it clears the saved key and turns polishing off.",
-    "revealError": "Could not display the saved key. Please try again."
+    "savedKeyHelp": "Each provider has its own key stored on this device. Replacing or removing this key does not change other providers’ keys. Removing it turns polishing off.",
+    "revealError": "Could not display the saved key. Please try again.",
+    "toggleHelp": "Usually off · turn on when you want your words organized",
+    "on": "On",
+    "off": "Off",
+    "modelHelp": "Pre-filled with a lightweight model. Enter another model ID supported by {{provider}}, or clear and save to restore the default. Usage is billed directly to your provider account.",
+    "saveModel": "Save model",
+    "modelSaved": "Model saved.",
+    "provider": "AI provider",
+    "providerHelp": "Use your own API key. nibi does not provide or resell an AI service. Switching providers turns polishing off until you enable it again.",
+    "providerSaved": "Provider changed. Polishing is off; enable it when needed.",
+    "mode": "Writing mode",
+    "modeSaved": "Writing mode saved.",
+    "timeout": "Polishing wait limit",
+    "timeoutDefault": "{{seconds}} seconds (default)",
+    "timeoutSeconds": "{{seconds}} seconds",
+    "timeoutHelp": "Maximum wait for the AI response after local transcription finishes, not a recording time limit. Choose longer for lengthy text or slower models. On timeout, nibi uses the original text. Changes apply to the next request.",
+    "timeoutSaved": "Polishing wait limit saved.",
+    "providers": {
+      "deepseek": {
+        "name": "DeepSeek",
+        "option": "DeepSeek · suggested starting point",
+        "description": "DeepSeek V4.1 Flash 1017 (deepseek-flash). A low-cost starting point with thinking disabled."
+      },
+      "openai": {
+        "name": "OpenAI",
+        "option": "OpenAI",
+        "description": "GPT-6 Luna is pre-filled for low-cost text editing with reasoning disabled."
+      },
+      "anthropic": {
+        "name": "Anthropic",
+        "option": "Anthropic · Claude",
+        "description": "Claude Haiku 5.5 is pre-filled as an inexpensive, fast option for text editing."
+      },
+      "gemini": {
+        "name": "Google Gemini",
+        "option": "Google · Gemini",
+        "description": "Gemini 3.5 Flash-Lite is pre-filled as another lightweight option."
+      }
+    },
+    "modes": {
+      "general": {
+        "name": "General cleanup",
+        "description": "Remove filler words and improve punctuation and structure while preserving your meaning."
+      },
+      "meeting": {
+        "name": "Meeting notes",
+        "description": "Organize discussion, decisions and follow-ups by topic, preserving reasons, disagreements and open questions. Include owners and dates only when stated."
+      },
+      "journal": {
+        "name": "Journal",
+        "description": "Shape spoken thoughts into natural paragraphs in your own voice. Preserve feelings, doubts and chronology without adding advice or invented reflections."
+      }
+    }
   },
   "dictionary": {
     "title": "Dictionary",
-    "privacy": "Vocabulary hints and replacement rules are stored and applied locally. If cloud polishing is enabled, the resulting transcription text is sent to DeepSeek.",
+    "privacy": "Vocabulary hints and replacement rules are stored and applied locally. If text polishing is enabled, the resulting transcription text is sent to your selected AI provider.",
     "vocabulary": "Custom vocabulary",
     "description": "Add the correct spelling of a name or term. Qwen3-ASR and Whisper use these words during local recognition; other models only support approximate correction of English words. Hints improve recognition but do not guarantee a match.",
     "word": "Word or phrase",

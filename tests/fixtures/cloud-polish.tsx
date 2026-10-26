@@ -15,7 +15,17 @@ const polished = "费用有两笔：每月 89 元，另有一次性费用 39 元
 let savedKey =
   localStorage.getItem("fixture-saved-key") ||
   (query.has("saved") ? "sk-fixture-saved-1234" : "");
+const models: Record<string, string> = {
+  deepseek: "deepseek-flash",
+  openai: "gpt-6-luna",
+  anthropic: "claude-haiku-5-5",
+  gemini: "gemini-3.5-flash-lite",
+};
 const state = {
+  provider: localStorage.getItem("fixture-provider") || "deepseek",
+  mode: localStorage.getItem("fixture-mode") || "general",
+  model: "",
+  timeout_seconds: Number(localStorage.getItem("fixture-timeout") || 12),
   enabled: Boolean(
     savedKey && localStorage.getItem("fixture-enabled") === "true",
   ),
@@ -29,6 +39,17 @@ const state = {
       }
     : null,
 };
+state.model =
+  localStorage.getItem(`fixture-model-${state.provider}`) ||
+  models[state.provider];
+if (state.provider !== "deepseek") {
+  savedKey = localStorage.getItem(`fixture-key-${state.provider}`) || "";
+  state.key_configured = Boolean(savedKey);
+  state.key_preview = savedKey ? "••••••••" + savedKey.slice(-4) : null;
+  state.enabled = Boolean(
+    savedKey && localStorage.getItem("fixture-enabled") === "true",
+  );
+}
 const testState = { clipboard: "", calls: [] as string[] };
 Object.assign(window, { polishTest: testState });
 Object.defineProperty(navigator, "clipboard", {
@@ -56,6 +77,10 @@ Object.defineProperty(window, "__TAURI_INTERNALS__", {
       command: string,
       args: {
         key?: string;
+        provider?: string;
+        mode?: string;
+        model?: string;
+        timeoutSeconds?: number;
         enabled?: boolean;
         handler?: number;
         event?: string;
@@ -70,11 +95,55 @@ Object.defineProperty(window, "__TAURI_INTERNALS__", {
       if (command === "get_app_settings")
         return { app_language: query.get("lang") || "zh" };
       if (command === "cloud_polish_status") return structuredClone(state);
+      if (command === "configure_cloud_polish") {
+        if (query.has("configerror")) throw "save_failed";
+        if (args.provider && args.provider !== state.provider) {
+          state.provider = args.provider;
+          state.enabled = false;
+          localStorage.setItem("fixture-provider", state.provider);
+          localStorage.removeItem("fixture-enabled");
+          savedKey =
+            localStorage.getItem(
+              state.provider === "deepseek"
+                ? "fixture-saved-key"
+                : `fixture-key-${state.provider}`,
+            ) ||
+            (state.provider === "deepseek" && query.has("saved")
+              ? "sk-fixture-saved-1234"
+              : "");
+          state.key_configured = Boolean(savedKey);
+          state.key_preview = savedKey ? "••••••••" + savedKey.slice(-4) : null;
+          state.model =
+            localStorage.getItem(`fixture-model-${state.provider}`) ||
+            models[state.provider];
+        }
+        if (args.mode) {
+          state.mode = args.mode;
+          localStorage.setItem("fixture-mode", state.mode);
+        }
+        if (args.timeoutSeconds !== undefined) {
+          state.timeout_seconds = args.timeoutSeconds;
+          localStorage.setItem(
+            "fixture-timeout",
+            String(state.timeout_seconds),
+          );
+        }
+        if (args.model !== undefined) {
+          state.model = args.model.trim() || models[state.provider];
+          localStorage.setItem(`fixture-model-${state.provider}`, state.model);
+        }
+        return;
+      }
       if (command === "set_cloud_polish_key") {
         if (query.has("saveerror") || (!args.key && query.has("removeerror")))
           throw "save_failed";
         savedKey = args.key || "";
-        localStorage.setItem("fixture-saved-key", savedKey);
+        localStorage.setItem(
+          state.provider === "deepseek"
+            ? "fixture-saved-key"
+            : `fixture-key-${state.provider}`,
+          savedKey,
+        );
         state.key_configured = Boolean(savedKey);
         state.key_preview = savedKey ? "••••••••" + savedKey.slice(-4) : null;
         if (!savedKey) {
