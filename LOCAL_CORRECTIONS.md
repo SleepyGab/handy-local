@@ -1,4 +1,4 @@
-# Handy Local — local corrections fork
+# nibi — local corrections fork
 
 Originally based on Handy v0.9.8 (14f6f0d31cb22a4268acfbddba3052820fd0a06e).
 The current integrated release is recorded in [.github/upstream-sync.json](.github/upstream-sync.json).
@@ -8,10 +8,10 @@ See the [upstream sync guide](docs/UPSTREAM_SYNC.zh-CN.md) for the preservation 
 
 - Keep the existing Fn hold/release dictation flow and local Qwen model.
 - Normal dictation stays silent, including fields without accessibility support.
-- Open “Correct Last Dictation…” from the Handy menu bar icon; the item is enabled
+- Open “Correct Last Dictation…” from the nibi menu bar icon; the item is enabled
   only while the recent in-memory dictation is available and recording is idle.
 - Only a detected word edit shows a 42px-high, single-row nonactivating capsule.
-  It shares Handy’s palette, with live interface-language
+  It uses nibi’s palette, with live interface-language
   updates ("记住？" / "Add?"). Click the phrase to open the full editor.
   Successful saves dismiss themselves after a short acknowledgement.
 - On macOS, observe only the exact focused accessibility text field captured
@@ -70,7 +70,7 @@ the resulting transcription text is still sent as before.
 
 ## Dictionary transfer
 
-Local corrections → Remembered words has Export dictionary / Import dictionary
+Dictionary → Replacement rules has Export dictionary / Import dictionary
 buttons (English, Simplified Chinese and Traditional Chinese). Export chooses a
 local JSON file containing only confirmed `from`/`to` rules, tagged
 `handy-local-dictionary` version 1. It excludes recordings, transcripts, model
@@ -98,8 +98,9 @@ requested in the model picker; downloaded model files reuse the Hugging Face
 cache. This is not a process-wide firewall. Text deliberately dictated into an
 online application follows that application's own transmission behavior.
 
-Cloud polishing uses the benchmarked conservative prompt, disables thinking,
-does not follow redirects, and has a 12-second request timeout. Incomplete,
+Cloud polishing uses a prompt that preserves details and organizes longer dictation
+into notes, tasks or discussion/decision/action lists where appropriate. It disables
+thinking, does not follow redirects, and has a 12-second request timeout. Incomplete,
 empty, invalid and failed responses fall back to the original. Original and
 polished text remain separate in History; the latest result also lives in memory
 until cleared or exit, so recovery does not depend on successfully saving audio.
@@ -116,7 +117,7 @@ bun install --frozen-lockfile
 CMAKE_POLICY_VERSION_MINIMUM=3.5 bun run build:local
 ```
 
-Output: `src-tauri/target/release/bundle/macos/Handy Local.app`.
+Output: `src-tauri/target/release/bundle/macos/nibi.app`.
 The original `/Applications/Handy.app` and its app data are separate. The custom
 bundle uses a stable certificate identity from the macOS keychain (see
 [signing setup](docs/INSTALL.en.md#local-builds-and-permission-recovery)); macOS

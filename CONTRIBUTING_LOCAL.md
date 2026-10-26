@@ -1,7 +1,7 @@
-# Contributing to Handy Local
+# Contributing to nibi
 
 Report fork-specific bugs or ideas in this repository. Include macOS version,
-Apple Silicon model, Handy Local version, target editor, reproduction steps and
+Apple Silicon model, nibi version, target editor, reproduction steps and
 expected/actual behavior. Use invented sample phrases; do not attach private
 recordings, dictionary files, transcripts, credentials or full app-data folders.
 
