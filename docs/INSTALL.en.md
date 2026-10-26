@@ -3,15 +3,15 @@
 Current source: nibi v0.0.1, for Apple Silicon Macs. Use a recent macOS version;
 older macOS and Intel have not been validated.
 
-The [release download](https://github.com/SleepyGab/nibi/releases) is still the older
-**Handy Local v0.9.8-local.1** preview. Its app is named **Handy Local.app** and it
-does not include the nibi rebrand, custom vocabulary or DeepSeek polishing.
-The steps below describe current nibi builds; for the legacy download, use its
-bundled installation guide. To build nibi, see [Build nibi](../README.md#build-nibi).
+Download **nibi-v0.0.1-macos-apple-silicon.dmg** from the
+[latest release](https://github.com/SleepyGab/nibi/releases/latest).
+It includes the nibi rebrand, custom vocabulary and optional DeepSeek polishing.
+The older Handy Local preview remains available in the release history; the steps
+below describe nibi. To build from source, see [Build nibi](../README.md#build-nibi).
 
-1. Copy **nibi.app** from your build output into **Applications** (or drag it
-   from a nibi DMG when one is available, then eject the DMG). Launch that copy.
-   Quit original Handy/Wispr Flow if they use Fn.
+1. Open the DMG, drag **nibi.app** into **Applications**, then eject the DMG.
+   Launch the copy in Applications. Quit original Handy/Wispr Flow if they use Fn.
+   When replacing an existing installation, quit nibi before copying the new app.
 2. This local preview is signed, but not Apple-notarized. If macOS blocks it, confirm
    that it came from the maintainer/release page, then use **System Settings →
    Privacy & Security → Open Anyway** yourself. Do not disable Gatekeeper globally.

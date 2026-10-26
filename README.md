@@ -55,10 +55,11 @@ review important output.
 · [English installation guide](docs/INSTALL.en.md)
 · [中文安装说明](docs/INSTALL.zh-CN.md)
 
-The current source is **nibi v0.0.1**. The available release download is the older
-**Handy Local v0.9.8-local.1** preview; it predates the nibi rebrand, custom
-vocabulary and DeepSeek polishing described above. Build from the `nibi` branch
-for the current features. The old package keeps its original name.
+Download the **nibi v0.0.1 Apple Silicon DMG** from the
+[latest release](https://github.com/SleepyGab/nibi/releases/latest). It includes the
+nibi rebrand, custom vocabulary, correction dictionary and optional DeepSeek polishing.
+The older **Handy Local v0.9.8-local.1** preview remains available under its original
+release; it predates these additions.
 
 nibi is an **early macOS Apple Silicon preview**, **not notarized by Apple**.
 Current local builds use a stable certificate identity; older preview packages

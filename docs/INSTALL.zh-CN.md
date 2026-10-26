@@ -3,14 +3,14 @@
 当前源码版本为 nibi v0.0.1，适用于 Apple Silicon Mac。
 建议使用较新的 macOS；尚未验证旧版 macOS 和 Intel 机型。
 
-[Release 下载](https://github.com/SleepyGab/nibi/releases)目前仍是旧版
-**Handy Local v0.9.8-local.1**，应用名称为 **Handy Local.app**，不包含 nibi 品牌、
-自定义词汇和 DeepSeek 文字润色。旧包请参照随包提供的安装说明；以下步骤针对当前 nibi
-构建，构建方法见 [Build nibi](../README.md#build-nibi)。
+从[最新 Release](https://github.com/SleepyGab/nibi/releases/latest) 下载
+**nibi-v0.0.1-macos-apple-silicon.dmg**，包含 nibi 品牌、自定义词汇、纠正词典和可选的
+DeepSeek 文字润色。旧版 Handy Local 仍保留在历史 Release 中，以下步骤针对 nibi。
+源码构建方法见 [Build nibi](../README.md#build-nibi)。
 
-1. 将构建输出中的 **nibi.app** 复制到 **Applications（应用程序）**；若后续提供 nibi
-   DMG，也可从 DMG 拖入后推出安装磁盘。从应用程序打开 nibi。
-   先退出占用 Fn 的原版 Handy/Wispr Flow。
+1. 打开 DMG，将 **nibi.app** 拖到 **Applications（应用程序）**，再推出安装磁盘。
+   从应用程序打开 nibi；先退出占用 Fn 的原版 Handy/Wispr Flow。
+   替换已有版本时，先退出 nibi，再复制新应用。
 2. 当前是本地签名的预览版，尚未经过 Apple 公证。若系统阻止打开，确认文件来自维护者或
    本项目 Release 后，由你本人到 **系统设置 → 隐私与安全性 → 仍要打开（Open Anyway）**。
    不需要关闭整个系统的安全检查。若提示文件损坏或含恶意软件，请停止并重新核对下载文件。
