@@ -21,11 +21,11 @@ GitHub Actions 的 **Check official Handy releases** 每周一 16:23 UTC
 - 合并冲突、保护检查失败、上游 tag 被移动或历史分叉：停止，Actions 标为失败。
   在任务摘要和 `upstream-sync-report` artifact 中查看原因；默认分支不受影响。
 
-没有自动合入、自动发布应用或自动打开 PR。继承的
-[PR 模板](../.github/PULL_REQUEST_TEMPLATE.md) 要求由人提交，并填写
-**Human Written Description**。成功准备分支后，Actions 摘要提供 GitHub 比较入口；
-下载 artifact 中的 `pull-request.md`，补全人写的段落及检查项，再从网页提交 PR。
-不要把 TODO 原样提交，也不要把未执行的测试标记为完成。
+同步任务不会自动合入、发布应用或打开 PR。nibi 的
+[PR 模板](../.github/PULL_REQUEST_TEMPLATE.md) 允许贡献者授权的自动 PR 创建，
+不要求单独由本人撰写说明，仍需如实披露 AI 辅助。成功准备分支后，Actions 摘要提供
+GitHub 比较入口和 artifact 中的 `pull-request.md`；核对改动说明与检查项后，可通过
+网页、CLI 或授权的工具提交 PR。不要把未执行的测试标记为完成。
 
 GitHub 的通知取决于账号的 Actions 通知设置。需要获知每次发现新版，可为这个
 workflow 启用完成通知；失败运行用于提示冲突或测试失败。公开仓库的定时任务可能在
@@ -66,7 +66,7 @@ git push -u origin codex/upstream-vX.Y.Z
 自动合并普通业务代码，保留双方不冲突的改动。同一段代码冲突时不使用
 `-X ours`、`-X theirs` 或全量覆盖解决。
 
-以下属于 fork 自己维护的文件，会保持本地版本：独立应用配置、README、本地维护说明、
+以下属于 fork 自己维护的文件，会保持本地版本：独立应用配置、README、AGENTS.md、本地维护说明、
 同步工具和正在运行的 CI 工作流。官方 README 更新到 `README.upstream.md`；官方工作流
 更新到 `.github/upstream-workflows/`，不会进入活动目录。自动同步脚本内的 `OWNED`
 列表是这项策略的明确清单；增加新的 fork 专属工具时应同步维护。
