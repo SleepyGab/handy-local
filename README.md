@@ -21,8 +21,14 @@ integrated official release.
   including Qwen3-ASR or Whisper.
 - **Teach names and terms.** Add correct spellings under **Dictionary → Custom
   vocabulary**, without supplying a misspelling. Qwen3-ASR and Whisper use them as
-  local recognition hints; other engines use approximate English-word correction.
+  local recognition hints. Cohere and Parakeet use local correction after
+  recognition, including English terms and Mandarin near-homophones when the
+  model supports the language. Ambiguous matches keep the original spelling.
   Hints do not guarantee spelling and do not train the model.
+- **Transcribe long recordings progressively.** Qwen3-ASR and Cohere decode
+  pause-based chunks while recording, with overlapping context and boundary
+  deduplication. Stopping finishes the remaining tail. Parakeet Unified EN keeps
+  its native English streaming path.
 - **Remember corrections with your approval.** A supported edit to the last
   dictated text can show a compact **Add?** prompt. Nothing is remembered until
   you confirm. **Correct Last Dictation** in the menu bar provides a manual route;

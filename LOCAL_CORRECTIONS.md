@@ -53,7 +53,12 @@ The existing JSON transfer controls transfer replacement rules only, as labeled.
 
 Qwen3-ASR receives bounded vocabulary as native system context through a pinned
 local patch of transcribe.cpp 0.2.4 (see `src-tauri/vendor/PATCHES.md`). Whisper
-keeps its native prompt; other engines keep their existing ASCII fuzzy fallback.
+keeps its native prompt. Other engines use local English term correction;
+Mandarin output also supports bounded near-homophone correction inside continuous
+text. Matches require pronunciation and spelling agreement; competing dictionary
+entries keep the original. Two-character names require an explicit entity cue.
+Latin terms embedded in Chinese are matched as separate spans. Explicit spelling
+explanations bypass fallback correction for every engine.
 Qwen/Whisper output is not corrected a second time by the fuzzy matcher.
 
 For Qwen with a nonempty vocabulary, a local unprompted pass protects explicitly
@@ -67,6 +72,28 @@ Limit: 32 terms, 50 Unicode characters per term, 400 total. Legacy oversized
 lists are preserved, remain removable, and are bounded when building a prompt.
 No dictionary list is added to DeepSeek requests. If cloud polishing is enabled,
 the resulting transcription text is still sent as before.
+
+## Progressive long recordings
+
+Qwen3-ASR and Cohere reuse Handy's pause-ranking planner, adapted to 20-second
+targets and 25-second maximum core chunks with three seconds of shared context.
+The live worker decodes completed chunks while recording, retaining a bounded
+pending tail. Stopping decodes that tail, not the completed recording again.
+Boundary context stays tentative in the overlay and is merged with bounded
+text alignment that tolerates small recognition differences. A truncated decode
+is retried on shorter audio; a permanent failure is never reported as a complete
+transcript. Live and saved-recording sample counts must agree before a live
+result is used. Parakeet Unified EN retains native streaming.
+
+Finalization distinguishes native streaming from chunked inference. Only a native
+stream flush has a 30-second deadline, beginning after the model is ready.
+Chunked inference and pending model loading wait for completion with cancellation
+polling, so slower hardware does not discard a valid transcript at that deadline.
+
+`cargo run --example dictation_eval -- MODEL LANGUAGE WORDS_JSON WAV...` evaluates
+the same local vocabulary and live decode helpers using 16 kHz mono int16 WAVs.
+It reports updates before stopping and final-tail time, and checks native
+cancellation and session reuse. Use invented phrases for evaluation recordings.
 
 ## Dictionary transfer
 

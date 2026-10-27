@@ -30,8 +30,10 @@ impl EarshotVad {
     }
 }
 
-impl VoiceActivityDetector for EarshotVad {
-    fn push_frame<'a>(&'a mut self, frame: &'a [f32]) -> Result<VadFrame<'a>> {
+impl EarshotVad {
+    /// Raw speech probability for pause-based chunk planning. Scoring never
+    /// removes audio and uses a fresh detector independent of the recorder.
+    pub fn speech_probability(&mut self, frame: &[f32]) -> Result<f32> {
         if frame.len() != EARSHOT_FRAME_SAMPLES {
             anyhow::bail!(
                 "expected {EARSHOT_FRAME_SAMPLES} samples, got {}",
@@ -55,7 +57,13 @@ impl VoiceActivityDetector for EarshotVad {
             self.engine.predict_f32(&self.clamped_frame)
         };
 
-        if score >= self.threshold {
+        Ok(score)
+    }
+}
+
+impl VoiceActivityDetector for EarshotVad {
+    fn push_frame<'a>(&'a mut self, frame: &'a [f32]) -> Result<VadFrame<'a>> {
+        if self.speech_probability(frame)? >= self.threshold {
             Ok(VadFrame::Speech(frame))
         } else {
             Ok(VadFrame::Noise)

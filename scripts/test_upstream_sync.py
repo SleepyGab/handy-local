@@ -34,7 +34,7 @@ class ReleasePolicyTests(unittest.TestCase):
             with self.subTest(changed=changed), self.assertRaises(ValueError):
                 sync.validate_release({**release, **changed}, state)
 
-    def test_pr_draft_requires_human_description_and_all_template_sections(self):
+    def test_pr_draft_matches_template_without_a_human_written_requirement(self):
         body = sync.pr_body({"tag": "v0.10.0"})
         template = (
             Path(__file__).resolve().parents[1] / ".github/PULL_REQUEST_TEMPLATE.md"
@@ -42,8 +42,10 @@ class ReleasePolicyTests(unittest.TestCase):
         for line in template.splitlines():
             if line.startswith("## "):
                 self.assertIn(line, body)
-        self.assertIn("TODO: The maintainer must write", body)
+        self.assertNotIn("Human Written Description", body)
+        self.assertNotIn("TODO: The maintainer must write", body)
         self.assertIn("- [ ] Native Mac smoke test", body)
+        self.assertIn("- [x] AI was used", body)
 
 
 class MergeTests(unittest.TestCase):

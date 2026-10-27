@@ -1,4 +1,5 @@
 //! Local ASR hints. Shared by dictation and the audio evaluation harness.
+use pinyin::ToPinyin;
 use transcribe_cpp::{
     Qwen3AsrRunOptions, RunExtension, RunOptions, Session, Transcript, WhisperRunOptions,
 };
@@ -116,6 +117,197 @@ pub fn has_spelling_cue(text: &str) -> bool {
         .any(|cue| text.contains(cue))
 }
 
+/// Local fallback for models without vocabulary conditioning. Mandarin terms
+/// require identical pronunciation and substantial spelling agreement; ties
+/// are left alone. The same spelling-cue protection applies to every model.
+pub fn correct_fallback(
+    text: &str,
+    words: &[String],
+    threshold: f64,
+    language: Option<&str>,
+) -> String {
+    if words.is_empty() || has_spelling_cue(text) {
+        return text.to_string();
+    }
+    let english = correct_ascii_spans(text, words, threshold);
+    if !language.is_some_and(|language| language == "zh" || language.starts_with("zh-")) {
+        return english;
+    }
+    correct_mandarin_terms(&english, words)
+}
+
+fn correct_ascii_spans(text: &str, words: &[String], threshold: f64) -> String {
+    let mut result = String::with_capacity(text.len());
+    let mut start = None;
+    // ASCII terms may be embedded directly in Chinese sentences. Correct
+    // each Latin span without making whitespace a requirement at CJK edges.
+    let mut spans = Vec::new();
+    for (at, c) in text.char_indices() {
+        if c.is_ascii() {
+            start.get_or_insert(at);
+        } else if let Some(from) = start.take() {
+            spans.push(from..at);
+        }
+    }
+    if let Some(from) = start {
+        spans.push(from..text.len());
+    }
+    let mut copied = 0;
+    for span in spans {
+        result.push_str(&text[copied..span.start]);
+        let source = &text[span.clone()];
+        let trimmed = source.trim();
+        if trimmed.is_empty() {
+            result.push_str(source);
+        } else {
+            let from = source.len() - source.trim_start().len();
+            result.push_str(&source[..from]);
+            result.push_str(&crate::audio_toolkit::apply_custom_words(
+                trimmed, words, threshold,
+            ));
+            result.push_str(&source[source.trim_end().len()..]);
+        }
+        copied = span.end;
+    }
+    result.push_str(&text[copied..]);
+    result
+}
+
+fn han(c: char) -> bool {
+    matches!(c as u32, 0x3400..=0x9fff | 0x20000..=0x323af)
+}
+
+fn pronunciation(chars: &[char]) -> Option<Vec<&'static str>> {
+    chars
+        .iter()
+        .map(|c| c.to_pinyin().map(|p| p.plain()))
+        .collect()
+}
+
+fn same_mandarin_sounds(candidate: &[&str], expected: &[&str]) -> bool {
+    let mut nasal_differences = 0;
+    for (actual, target) in candidate.iter().zip(expected) {
+        if actual == target {
+            continue;
+        }
+        // Front/back nasal confusion is a common ASR spelling error. Permit
+        // one such syllable only in a longer term; all other syllables must
+        // match exactly. Do not use generic edit distance on pronunciations.
+        let normalize = |sound: &str| {
+            sound
+                .strip_suffix('g')
+                .filter(|_| sound.ends_with("ng"))
+                .unwrap_or(sound)
+                .to_string()
+        };
+        if candidate.len() < 3 || normalize(actual) != normalize(target) {
+            return false;
+        }
+        nasal_differences += 1;
+    }
+    nasal_differences <= 1
+}
+
+fn correct_mandarin_terms(text: &str, words: &[String]) -> String {
+    let terms: Vec<_> = bounded_words(words)
+        .into_iter()
+        .filter_map(|word| {
+            let chars: Vec<char> = word.chars().collect();
+            if chars.len() < 2 || !chars.iter().all(|&c| han(c)) {
+                return None;
+            }
+            let sounds = pronunciation(&chars)?;
+            Some((word, chars, sounds))
+        })
+        .collect();
+    let chars: Vec<char> = text.chars().collect();
+    let mut result = String::with_capacity(text.len());
+    let mut at = 0;
+    while at < chars.len() {
+        let mut best: Option<(usize, usize, &str)> = None;
+        let mut ambiguous = false;
+        for (word, spelling, sounds) in &terms {
+            let length = spelling.len();
+            let Some(candidate) = chars.get(at..at + length) else {
+                continue;
+            };
+            // Preserve an exact dictionary spelling even when another entry
+            // shares its pronunciation (e.g. two people with homophone names).
+            if candidate == spelling.as_slice() {
+                best = Some((length, 0, word));
+                ambiguous = false;
+                break;
+            }
+            let differences = candidate
+                .iter()
+                .zip(spelling)
+                .filter(|(a, b)| a != b)
+                .count();
+            // A four-character entity may have a two-character name followed
+            // by an exact suffix (e.g. 新栏科技 -> 星澜科技). Keep at least half
+            // the spelling and every syllable, apart from one nasal variant.
+            let allowed_differences = (length / 3).max(1) + usize::from(length == 4);
+            if differences > allowed_differences || !candidate.iter().all(|&c| han(c)) {
+                continue;
+            }
+            // Two-character homophones are common ordinary words. Only
+            // correct them immediately after an explicit name/entity cue.
+            if length == 2 {
+                let before: String = chars[..at]
+                    .iter()
+                    .rev()
+                    .take(8)
+                    .copied()
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .rev()
+                    .collect();
+                if ![
+                    "联系",
+                    "发给",
+                    "叫",
+                    "名字是",
+                    "公司是",
+                    "项目是",
+                    "同事",
+                    "客户",
+                ]
+                .iter()
+                .any(|cue| before.ends_with(cue))
+                {
+                    continue;
+                }
+            }
+            if !pronunciation(candidate)
+                .is_some_and(|candidate| same_mandarin_sounds(&candidate, sounds))
+            {
+                continue;
+            }
+            match best {
+                Some((best_len, best_diff, _))
+                    if best_len == length && best_diff == differences =>
+                {
+                    ambiguous = true
+                }
+                Some((best_len, best_diff, _))
+                    if best_len > length || (best_len == length && best_diff < differences) => {}
+                _ => {
+                    best = Some((length, differences, word));
+                    ambiguous = false;
+                }
+            }
+        }
+        if let Some((length, _, word)) = best.filter(|_| !ambiguous) {
+            result.push_str(word);
+            at += length;
+        } else {
+            result.push(chars[at]);
+            at += 1;
+        }
+    }
+    result
+}
+
 /// Qwen context can overrule even an explicitly spoken spelling. Obtain the
 /// unprompted result first; skip hints for spelling explanations. A failed hint
 /// pass also keeps that complete local result. No network or output rewrite.
@@ -150,6 +342,83 @@ pub fn transcribe(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn fallback_uses_mandarin_vocabulary_inside_continuous_text() {
+        let words = vec!["星澜科技".into(), "嘉琪".into()];
+        assert_eq!(
+            correct_fallback(
+                "今天去星蓝科技开会，然后联系佳琪。",
+                &words,
+                0.18,
+                Some("zh")
+            ),
+            "今天去星澜科技开会，然后联系嘉琪。"
+        );
+        assert_eq!(
+            correct_fallback("星澜科技已经确认。", &words, 0.18, Some("zh")),
+            "星澜科技已经确认。"
+        );
+        assert_eq!(
+            correct_fallback("去新栏科技，再回新兰科技。", &words, 0.18, Some("zh")),
+            "去星澜科技，再回星澜科技。"
+        );
+    }
+
+    #[test]
+    fn fallback_preserves_spelling_explanations_and_ambiguous_homophones() {
+        let words = vec!["星澜科技".into(), "嘉琪".into()];
+        let spelling = "星蓝科技，写成蓝色的蓝，不是这个字。";
+        assert_eq!(
+            correct_fallback(spelling, &words, 0.18, Some("zh")),
+            spelling
+        );
+        let ambiguous = vec!["星澜科技".into(), "星岚科技".into()];
+        assert_eq!(
+            correct_fallback("去星蓝科技", &ambiguous, 0.18, Some("zh")),
+            "去星蓝科技"
+        );
+        assert_eq!(
+            correct_fallback("佳琪今天来了。", &words, 0.18, Some("zh")),
+            "佳琪今天来了。"
+        );
+    }
+
+    #[test]
+    fn fallback_does_not_rewrite_japanese_or_unrelated_chinese() {
+        let words = vec!["星澜科技".into()];
+        assert_eq!(
+            correct_fallback("星蓝科技", &words, 0.18, Some("ja")),
+            "星蓝科技"
+        );
+        assert_eq!(
+            correct_fallback("新蓝科学和星蓝课题", &words, 0.18, Some("zh")),
+            "新蓝科学和星蓝课题"
+        );
+        assert_eq!(
+            correct_fallback("今天去公园买东西", &words, 0.18, Some("zh")),
+            "今天去公园买东西"
+        );
+        assert_eq!(correct_fallback("星蓝科技", &words, 0.18, None), "星蓝科技");
+    }
+
+    #[test]
+    fn fallback_corrects_english_terms_embedded_in_chinese() {
+        let words = vec!["NovaLoom".into(), "ChargeBee".into()];
+        assert_eq!(
+            correct_fallback(
+                "请联系Nova Loom，项目叫Charge B。",
+                &words,
+                0.18,
+                Some("zh")
+            ),
+            "请联系NovaLoom，项目叫ChargeBee。"
+        );
+        assert_eq!(
+            correct_fallback("  Nova Loom  ", &words, 0.18, Some("en")),
+            "  NovaLoom  "
+        );
+    }
 
     #[test]
     fn validates_names_without_requiring_a_misspelling() {

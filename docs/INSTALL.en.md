@@ -41,7 +41,10 @@ below describe nibi. To build from source, see [Build nibi](../README.md#build-n
    automatic detection. **Export dictionary / Import dictionary** moves only
    confirmed phrase pairs between computers; it does not transfer custom vocabulary,
    models or History. Under **Dictionary → Custom vocabulary**, add correct spellings
-   of names and terms as local recognition hints. Hints do not guarantee spelling.
+   of names and terms. Qwen3-ASR and Whisper use recognition hints; Cohere and
+   Parakeet use local correction afterward, within each model's supported
+   languages. Ambiguous matches and explicit spelling explanations keep the
+   original text. Vocabulary does not guarantee spelling.
 
 Optional: enable launch at login, start hidden, and unload the model after 5 minutes
 in nibi's settings. A fresh installation has its own preferences and empty dictionary;
@@ -69,8 +72,9 @@ network, and the app you dictate into may itself send text online. For local-onl
 backups, save exported dictionaries outside cloud-synced folders.
 
 There is no fixed recording timer cutoff. Long-recording reliability still depends
-on the local model: Parakeet Unified EN streams English; Qwen3-ASR and Cohere currently
-process audio after stopping without automatic long-audio splitting. Meeting mode
+on the local model: Parakeet Unified EN streams English; Qwen3-ASR and Cohere decode
+pause-based chunks while recording and finish the remaining tail after stopping.
+Overlapping context and boundary deduplication preserve continuity. Meeting mode
 only formats the resulting text. Hour-long meeting transcription has not been validated.
 
 Updates use the same app data. Moving from an older ad-hoc preview to a certificate

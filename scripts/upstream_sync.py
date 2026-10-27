@@ -27,6 +27,7 @@ OWNED = [
     ".github/workflows",
     STATE,
     ".github/PULL_REQUEST_TEMPLATE.md",
+    "AGENTS.md",
     "README.md",
     "CONTRIBUTING_LOCAL.md",
     "LOCAL_CORRECTIONS.md",
@@ -200,30 +201,18 @@ def prepare(
 
 
 def pr_body(result: dict) -> str:
-    return f"""## Before Submitting This PR
+    return f"""## Description
 
-This is a release sync into **{FORK}**, not a contribution to official Handy.
-
-- [ ] I checked for an existing sync branch/PR for this release.
-- [ ] I read CONTRIBUTING_LOCAL.md and the retained upstream contribution guidance.
-- [ ] I explained any previously rejected change and relevant community feedback.
-
-## Human Written Description
-
-TODO: The maintainer must write 2–3 sentences in their own words before submitting.
-
-Technical preparation: merge official Handy **{result["tag"]}** into `{BASE_BRANCH}`,
-preserving local corrections, local-only behavior and the fork's app identity.
+Merge official Handy **{result["tag"]}** into `{BASE_BRANCH}`, preserving local
+corrections, local-only behavior and the fork's app identity.
 Release: https://github.com/{UPSTREAM}/releases/tag/{result["tag"]}
 Upstream commit: `{result.get("upstream_commit", "")}`
+
+This is a release sync into **{FORK}**. Review the prepared merge before submission.
 
 ## Related Issues/Discussions
 
 Scheduled stable-release maintenance. Add relevant bug links after reviewing the release.
-
-## Community Feedback
-
-Fork maintenance requested by its maintainer. No new feature is proposed upstream.
 
 ## Testing
 
@@ -234,16 +223,23 @@ Fork maintenance requested by its maintainer. No new feature is proposed upstrea
 
 ## Screenshots/Videos (if applicable)
 
-TODO: Attach evidence if the update changes the UI; otherwise mark not applicable.
+Attach evidence if the update changes the UI; otherwise mark not applicable.
 
 ## AI Assistance
 
 - [ ] No AI was used in this PR
-- [x] AI was used (please describe below)
+- [x] AI was used (describe the tools and scope below)
 
 Tools used: Codex helped implement the synchronization workflow; Git prepared this merge.
-How extensively: release selection and merge preparation are automated. Human review,
-the Human Written Description, native smoke tests and release publication remain pending.
+Release selection and merge preparation are automated. Review, native smoke tests
+and release publication remain pending.
+
+## Checklist
+
+- [ ] I have checked existing nibi issues and PRs for related work.
+- [ ] I have followed AGENTS.md and CONTRIBUTING_LOCAL.md.
+- [ ] Public text and attached evidence contain no private recordings, settings,
+      dictionary contents, credentials, or machine-specific details.
 """
 
 
@@ -268,7 +264,7 @@ def report(result: dict, directory: Path) -> None:
             f"Branch: `{result['branch']}`",
             f"[Review / submit a PR on GitHub]({result['compare_url']})",
             "",
-            "Complete the human-written description before submitting. No PR or app release was published.",
+            "Review the prepared description and testing checklist before submitting. No PR or app release was published.",
         ]
         (directory / "pull-request.md").write_text(pr_body(result))
     for key in ("conflicts", "errors"):
