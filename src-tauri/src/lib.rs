@@ -14,6 +14,7 @@ mod helpers;
 mod input;
 mod llm_client;
 mod local_corrections;
+mod long_form;
 mod managers;
 mod memory;
 mod overlay;

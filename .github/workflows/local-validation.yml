@@ -72,5 +72,9 @@ jobs:
         run: cargo test --locked --manifest-path src-tauri/Cargo.toml --features local-only cloud_polish --lib
       - name: Test local vocabulary validation and spelling protection
         run: cargo test --locked --manifest-path src-tauri/Cargo.toml --features local-only vocabulary --lib
+      - name: Test long recordings, live tail coverage and boundary stitching
+        run: |
+          cargo test --locked --manifest-path src-tauri/Cargo.toml --features local-only long_form --lib
+          cargo test --locked --manifest-path src-tauri/Cargo.toml --features local-only audio_toolkit::chunking --lib
       - name: Check native integration
         run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --features local-only --lib

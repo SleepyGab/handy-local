@@ -895,7 +895,7 @@
     "title": "Dictionary",
     "privacy": "Vocabulary hints and replacement rules are stored and applied locally. If text polishing is enabled, the resulting transcription text is sent to your selected AI provider.",
     "vocabulary": "Custom vocabulary",
-    "description": "Add the correct spelling of a name or term. Qwen3-ASR and Whisper use these words during local recognition; other models only support approximate correction of English words. Hints improve recognition but do not guarantee a match.",
+    "description": "Add the correct spelling of a name or term. Qwen3-ASR and Whisper use these words during local recognition. Cohere and Parakeet apply local correction after recognition, within the model’s supported languages. Ambiguous matches and explicit spelling explanations are kept unchanged.",
     "word": "Word or phrase",
     "placeholder": "e.g. 星澜科技, NovaLoom",
     "add": "Add word",

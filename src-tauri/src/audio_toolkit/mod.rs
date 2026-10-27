@@ -1,4 +1,5 @@
 pub mod audio;
+pub mod chunking;
 pub mod constants;
 pub mod lang_id;
 pub mod text;

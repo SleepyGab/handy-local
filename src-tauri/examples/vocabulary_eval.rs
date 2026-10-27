@@ -1,5 +1,7 @@
 //! Local WAV evaluation using exactly the dictionary prompt used by dictation.
+use handy_app_lib::audio_toolkit;
 #[path = "../src/vocabulary.rs"]
+#[allow(dead_code)]
 mod vocabulary;
 
 use std::io::Write;

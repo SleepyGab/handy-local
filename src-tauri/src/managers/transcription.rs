@@ -1,6 +1,6 @@
 use crate::audio_toolkit::{
-    apply_custom_words, detect_output_language, normalize_transcription_output,
-    remove_filler_words, OutputLanguageEvidence,
+    detect_output_language, normalize_transcription_output, remove_filler_words,
+    OutputLanguageEvidence,
 };
 use crate::chinese_script::{convert_chinese_script, ChineseVariety};
 use crate::managers::audio::AudioRecordingManager;
@@ -21,7 +21,7 @@ use std::time::{Duration, Instant, SystemTime};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_specta::Event;
 use transcribe_cpp::{
-    Backend, Feature, Model, ModelOptions, RunOptions, Session, StreamOptions, Task,
+    Backend, CancelToken, Feature, Model, ModelOptions, RunOptions, Session, StreamOptions, Task,
 };
 use transcribe_rs::{
     onnx::{
@@ -109,8 +109,17 @@ enum StreamCmd {
 struct FinalizedStreamText {
     text: String,
     output_language: OutputLanguageEvidence,
+    samples: usize,
+    vocabulary_prompted: bool,
     /// The streaming model's supported languages, for text-based detection.
     supported_languages: Vec<String>,
+}
+
+struct ChunkedRun {
+    options: RunOptions,
+    output_language: OutputLanguageEvidence,
+    languages: Vec<String>,
+    settings: AppSettings,
 }
 
 /// Routes real-time audio frames to the active streaming worker. Shared between
@@ -222,12 +231,17 @@ struct StreamWorkerGuard {
     active_stream_worker: Arc<AtomicU64>,
     active_engine_lease: Arc<AtomicU64>,
     stream_active: Arc<AtomicBool>,
+    stream_cancel: Arc<Mutex<Option<(u64, CancelToken)>>>,
 }
 
 impl Drop for StreamWorkerGuard {
     fn drop(&mut self) {
         if self.active_stream_worker.load(Ordering::Acquire) == self.worker_id {
             self.stream_active.store(false, Ordering::Release);
+        }
+        let mut cancel = self.stream_cancel.lock().unwrap_or_else(|e| e.into_inner());
+        if cancel.as_ref().is_some_and(|(id, _)| *id == self.worker_id) {
+            *cancel = None;
         }
         let _ = self.active_engine_lease.compare_exchange(
             self.worker_id,
@@ -260,9 +274,10 @@ pub struct TranscriptionManager {
     /// [`StreamRouter`]. Shared with the audio recorder so per-frame feeds skip
     /// Tauri state and the manager lock.
     router: Arc<StreamRouter>,
-    /// True only while a transcribe-cpp `Stream` is actually in flight (set by
-    /// the worker once `stream()` succeeds). Used for overlay/UI decisions.
+    /// True while native streaming or pause-based live decoding is active.
+    /// Used for overlay/UI decisions; independent of the model's native caps.
     stream_active: Arc<AtomicBool>,
+    stream_cancel: Arc<Mutex<Option<(u64, CancelToken)>>>,
     /// Streaming uses four independent flags: router open = frames should route,
     /// worker active = no second worker may start, engine lease = engine is out
     /// of the mutex, stream active = UI should show a live session.
@@ -294,6 +309,7 @@ impl TranscriptionManager {
             reload_model_on_next_use: Arc::new(AtomicBool::new(false)),
             router: Arc::new(StreamRouter::new()),
             stream_active: Arc::new(AtomicBool::new(false)),
+            stream_cancel: Arc::new(Mutex::new(None)),
             next_stream_worker_id: Arc::new(AtomicU64::new(1)),
             active_stream_worker: Arc::new(AtomicU64::new(0)),
             active_engine_lease: Arc::new(AtomicU64::new(0)),
@@ -801,6 +817,26 @@ impl TranscriptionManager {
         Arc::clone(&self.router)
     }
 
+    /// Models decoded as pause-based chunks while recording. Native streaming
+    /// models use their own stream; unknown/custom models still get checked
+    /// against the loaded session before any chunked decode begins.
+    pub fn supports_chunked_recording(&self, model_id: &str) -> bool {
+        if let Some((repo, filename)) = model_id.rsplit_once('/') {
+            if let Some((model, _)) = crate::catalog::file_in_catalog(filename, Some(repo)) {
+                return matches!(
+                    model.caps.architecture.as_deref(),
+                    Some("cohere_asr" | "qwen3_asr")
+                );
+            }
+        }
+        if self.get_current_model().as_deref() == Some(model_id) {
+            if let Some(LoadedEngine::TranscribeCpp(session)) = self.lock_engine().as_ref() {
+                return matches!(session.model().arch().as_str(), "cohere_asr" | "qwen3_asr");
+            }
+        }
+        false
+    }
+
     /// Begin a live streaming transcription on the held engine's session.
     /// Audio frames pushed via [`StreamRouter::feed`] (captured directly by the
     /// audio recorder) are decoded incrementally and emitted to the overlay as
@@ -826,6 +862,8 @@ impl TranscriptionManager {
             return;
         }
         let rx = self.router.open();
+        *self.stream_cancel.lock().unwrap_or_else(|e| e.into_inner()) =
+            Some((worker_id, CancelToken::new()));
         self.stream_active.store(false, Ordering::Release);
 
         let manager = self.clone();
@@ -838,6 +876,7 @@ impl TranscriptionManager {
             active_stream_worker: Arc::clone(&self.active_stream_worker),
             active_engine_lease: Arc::clone(&self.active_engine_lease),
             stream_active: Arc::clone(&self.stream_active),
+            stream_cancel: Arc::clone(&self.stream_cancel),
         };
 
         // Wait for any in-progress model load to finish (start_stream races the
@@ -918,7 +957,9 @@ impl TranscriptionManager {
             }
         };
 
-        if !supports_streaming {
+        let chunked = matches!(&engine, LoadedEngine::TranscribeCpp(session)
+            if matches!(session.model().arch().as_str(), "cohere_asr" | "qwen3_asr"));
+        if !supports_streaming && !chunked {
             self.return_engine(engine, &model_id);
             self.router.clear();
             drain_until_finalize(rx);
@@ -948,6 +989,29 @@ impl TranscriptionManager {
             target_language: run_plan.target_language,
             ..Default::default()
         };
+
+        if let LoadedEngine::TranscribeCpp(session) = &mut engine {
+            let cancel = self.stream_cancel.lock().unwrap_or_else(|e| e.into_inner());
+            if let Some((id, token)) = cancel.as_ref() {
+                if *id == worker_id {
+                    session.set_cancel_token(token);
+                }
+            }
+        }
+        if !supports_streaming && chunked {
+            self.run_chunked_worker(
+                rx,
+                engine,
+                &model_id,
+                ChunkedRun {
+                    options: run_options,
+                    output_language,
+                    languages,
+                    settings,
+                },
+            );
+            return;
+        }
 
         // Run the stream on the held session. The Stream borrows the session
         // (and thus the engine) for its lifetime, so the feed/finalize loop
@@ -985,9 +1049,11 @@ impl TranscriptionManager {
             );
 
             let mut perf = StreamPerf::new();
+            let mut samples_received = 0;
             while let Ok(cmd) = rx.recv() {
                 match cmd {
                     StreamCmd::Feed(pcm) => {
+                        samples_received += pcm.len();
                         self.touch_activity();
                         perf.record_feed(pcm.len());
                         let feed_start = Instant::now();
@@ -1046,6 +1112,8 @@ impl TranscriptionManager {
                                 Some(FinalizedStreamText {
                                     text: stream.text().full,
                                     output_language,
+                                    samples: samples_received,
+                                    vocabulary_prompted: false,
                                     supported_languages: languages.clone(),
                                 })
                             }
@@ -1096,9 +1164,81 @@ impl TranscriptionManager {
         // the engine has been returned to the pool.
     }
 
+    fn run_chunked_worker(
+        &self,
+        rx: mpsc::Receiver<StreamCmd>,
+        mut engine: LoadedEngine,
+        model_id: &str,
+        run: ChunkedRun,
+    ) {
+        let mut decoder = crate::long_form::LiveDecoder::default();
+        let vocabulary_prompted = matches!(&engine, LoadedEngine::TranscribeCpp(session)
+            if session.model().arch() == "qwen3_asr");
+        let mut preview = PreviewScript::new(run.settings.chinese_script, &run.output_language);
+        let mut failed = false;
+        let mut reply = None;
+        let mut finalized = None;
+        self.stream_active.store(true, Ordering::Release);
+        info!("Live pause-based transcription started for '{}'", model_id);
+        while let Ok(command) = rx.recv() {
+            self.touch_activity();
+            let LoadedEngine::TranscribeCpp(session) = &mut engine else {
+                break;
+            };
+            match command {
+                StreamCmd::Feed(pcm) if !failed => {
+                    match decoder.feed(&pcm, session, &run.options, &run.settings.custom_words) {
+                        Ok(true) => {
+                            let (stable, pending) = decoder.preview();
+                            let (committed, tentative) =
+                                preview.convert(stable, pending, &run.languages);
+                            self.emit_stream_text(&committed, &tentative);
+                        }
+                        Ok(false) => {}
+                        Err(error) => {
+                            warn!("Live chunk failed; batch fallback will use the saved recording: {error:#}");
+                            failed = true;
+                        }
+                    }
+                }
+                StreamCmd::Feed(_) => {}
+                StreamCmd::Finalize(sender) => {
+                    reply = Some(sender);
+                    if !failed {
+                        match decoder.finish(session, &run.options, &run.settings.custom_words) {
+                            Ok(()) => {
+                                finalized = Some(FinalizedStreamText {
+                                    text: decoder.text().to_string(),
+                                    samples: decoder.samples,
+                                    vocabulary_prompted,
+                                    output_language: run.output_language,
+                                    supported_languages: run.languages,
+                                })
+                            }
+                            Err(error) => {
+                                warn!("Live tail failed; falling back to batch: {error:#}")
+                            }
+                        }
+                    }
+                    break;
+                }
+                StreamCmd::Cancel => break,
+            }
+        }
+        // The fallback is allowed to use this engine only after the lease is
+        // returned. A cancelled run's token is cleared by return_engine().
+        self.return_engine(engine, model_id);
+        if let Some(reply) = reply {
+            let _ = reply.send(finalized);
+        }
+    }
+
     /// Return the leased engine to the mutex, unless the model was switched or
     /// unloaded during transcription (in which case the stale engine is dropped).
-    fn return_engine(&self, engine: LoadedEngine, expected_model_id: &str) {
+    fn return_engine(&self, mut engine: LoadedEngine, expected_model_id: &str) {
+        if let LoadedEngine::TranscribeCpp(session) = &mut engine {
+            session.clear_cancel_token();
+        }
         let still_current =
             self.current_model_id.lock().unwrap().as_deref() == Some(expected_model_id);
         if still_current {
@@ -1118,7 +1258,7 @@ impl TranscriptionManager {
     /// to batch transcription. `Err` means finalize itself failed or timed out.
     /// A timeout may still leave the worker holding the engine, so callers
     /// should surface it instead of immediately starting a batch fallback.
-    pub fn finalize_stream(&self) -> Result<Option<String>> {
+    pub fn finalize_stream(&self, recorded_samples: usize) -> Result<Option<String>> {
         let Some(tx) = self.router.take() else {
             return Ok(None);
         };
@@ -1139,13 +1279,21 @@ impl TranscriptionManager {
             }
         };
 
+        if finalized.samples != recorded_samples {
+            warn!(
+                "Live transcription received {} of {} recorded samples; using batch fallback",
+                finalized.samples, recorded_samples
+            );
+            return Ok(None);
+        }
+
         let settings = get_settings(&self.app_handle);
-        // Streaming models do not receive a decode prompt, so custom words
-        // always go through the shared fuzzy post-correction path.
+        // Native streams use local dictionary correction; chunked Qwen runs
+        // already used their vocabulary and spelling guard during recognition.
         let filtered = post_process_transcription_text(
             finalized.text,
             &settings,
-            false,
+            finalized.vocabulary_prompted,
             &finalized.output_language,
             &finalized.supported_languages,
         );
@@ -1156,6 +1304,14 @@ impl TranscriptionManager {
 
     /// Abandon any active stream without producing text (e.g. on cancel).
     pub fn cancel_stream(&self) {
+        if let Some((_, token)) = self
+            .stream_cancel
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .as_ref()
+        {
+            token.cancel();
+        }
         if let Some(tx) = self.router.take() {
             let _ = tx.send(StreamCmd::Cancel);
         }
@@ -1323,6 +1479,15 @@ impl TranscriptionManager {
                             custom_words_prompted && !settings.custom_words.is_empty()
                         );
 
+                        if matches!(session.model().arch().as_str(), "cohere_asr" | "qwen3_asr") {
+                            return crate::long_form::transcribe_cpp(
+                                session,
+                                &audio,
+                                &run_options,
+                                &settings.custom_words,
+                            );
+                        }
+
                         crate::vocabulary::transcribe(
                             session,
                             &audio,
@@ -1405,14 +1570,7 @@ impl TranscriptionManager {
                             Some(validated_language.clone())
                         };
                         applied_language_hint = lang.clone();
-                        let options = TranscribeOptions {
-                            language: lang,
-                            ..Default::default()
-                        };
-                        cohere_engine
-                            .transcribe(&audio, &options)
-                            .map(|r| r.text)
-                            .map_err(|e| anyhow::anyhow!("Cohere transcription failed: {}", e))
+                        crate::long_form::transcribe_onnx(cohere_engine, &audio, lang)
                     }
                 }
             }));
@@ -1785,10 +1943,26 @@ fn post_process_transcription_text(
         };
 
         let corrected = if !settings.custom_words.is_empty() && !custom_words_already_prompted {
-            apply_custom_words(
+            // A multilingual model without LID may receive a coerced English
+            // hint in auto mode yet emit Chinese. For dictionary matching,
+            // prefer confident text evidence over that fallback, while keeping
+            // explicit user/model language evidence authoritative.
+            let dictionary_language = if settings.selected_language == "auto"
+                && matches!(
+                    output_language,
+                    OutputLanguageEvidence::ModelConstrained(_) | OutputLanguageEvidence::Unknown
+                ) {
+                detect_output_language(&raw, supported_languages)
+            } else {
+                None
+            };
+            crate::vocabulary::correct_fallback(
                 &raw,
                 &settings.custom_words,
                 settings.word_correction_threshold,
+                dictionary_language
+                    .as_deref()
+                    .or_else(|| output_language.language()),
             )
         } else {
             raw
@@ -2213,6 +2387,24 @@ mod tests {
 
     fn languages(codes: &[&str]) -> Vec<String> {
         codes.iter().map(|code| (*code).to_string()).collect()
+    }
+
+    #[test]
+    fn dictionary_uses_chinese_output_despite_a_coerced_english_hint() {
+        let settings = AppSettings {
+            selected_language: "auto".into(),
+            custom_words: vec!["星澜科技".into()],
+            filler_word_removal_enabled: false,
+            ..Default::default()
+        };
+        let result = post_process_transcription_text(
+            "今天下午我们一起去新栏科技开会，然后讨论明天上午的工作安排。".into(),
+            &settings,
+            false,
+            &OutputLanguageEvidence::ModelConstrained("en".into()),
+            &languages(&["zh", "ja", "en"]),
+        );
+        assert!(result.contains("星澜科技"), "{result}");
     }
 
     #[test]
