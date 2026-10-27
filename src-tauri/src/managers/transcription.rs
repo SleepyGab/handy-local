@@ -14,7 +14,7 @@ use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering};
 use std::sync::{mpsc, Arc, Condvar, Mutex, MutexGuard, OnceLock};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
@@ -37,7 +37,87 @@ use transcribe_rs::{
 };
 
 const STREAM_PERF_LOG_INTERVAL: Duration = Duration::from_secs(5);
-const STREAM_FINALIZE_REPLY_TIMEOUT: Duration = Duration::from_secs(30);
+const NATIVE_STREAM_FINALIZE_TIMEOUT: Duration = Duration::from_secs(30);
+const FINALIZE_CANCEL_POLL_INTERVAL: Duration = Duration::from_millis(100);
+
+#[repr(u8)]
+enum LiveDecodeMode {
+    Starting,
+    NativeStream,
+    Chunked,
+}
+
+/// Per-recording control survives removal from the manager's active slot, so
+/// finalization cannot accidentally observe the following recording's mode.
+#[derive(Clone)]
+struct StreamControl {
+    worker_id: u64,
+    cancel: CancelToken,
+    mode: Arc<AtomicU8>,
+}
+
+impl StreamControl {
+    fn new(worker_id: u64) -> Self {
+        Self {
+            worker_id,
+            cancel: CancelToken::new(),
+            mode: Arc::new(AtomicU8::new(LiveDecodeMode::Starting as u8)),
+        }
+    }
+
+    fn set_mode(&self, mode: LiveDecodeMode) {
+        self.mode.store(mode as u8, Ordering::Release);
+    }
+}
+
+type SharedStreamControl = Arc<Mutex<Option<StreamControl>>>;
+
+#[derive(Debug, PartialEq, Eq)]
+enum FinalizeWaitError {
+    Cancelled,
+    NativeStreamTimeout,
+}
+
+/// Chunked finalization performs batch inference, which has no native-stream
+/// flush deadline. Waiting for model loading is also not a stream flush. Poll
+/// the cancel token so either wait remains interruptible even if native work
+/// has not returned yet.
+fn wait_for_live_result<T>(
+    reply: &mpsc::Receiver<Option<T>>,
+    control: &StreamControl,
+    native_timeout: Duration,
+    poll_interval: Duration,
+) -> std::result::Result<Option<T>, FinalizeWaitError> {
+    let mut native_started: Option<Instant> = None;
+    loop {
+        if control.cancel.is_cancelled() {
+            return Err(FinalizeWaitError::Cancelled);
+        }
+        // Accept a completed reply before checking the deadline: it may have
+        // arrived at exactly the timeout boundary.
+        match reply.try_recv() {
+            Ok(result) => return Ok(result),
+            Err(mpsc::TryRecvError::Disconnected) => return Ok(None),
+            Err(mpsc::TryRecvError::Empty) => {}
+        }
+        let wait = if control.mode.load(Ordering::Acquire) == LiveDecodeMode::NativeStream as u8 {
+            let elapsed = native_started.get_or_insert_with(Instant::now).elapsed();
+            let remaining = native_timeout.saturating_sub(elapsed);
+            if remaining.is_zero() {
+                return Err(FinalizeWaitError::NativeStreamTimeout);
+            }
+            poll_interval.min(remaining)
+        } else {
+            poll_interval
+        };
+        match reply.recv_timeout(wait) {
+            Ok(result) if !control.cancel.is_cancelled() => return Ok(result),
+            Ok(_) => return Err(FinalizeWaitError::Cancelled),
+            Err(mpsc::RecvTimeoutError::Disconnected) => return Ok(None),
+            Err(mpsc::RecvTimeoutError::Timeout) => {}
+        }
+    }
+}
 
 fn panic_payload_message(payload: &(dyn std::any::Any + Send)) -> String {
     if let Some(message) = payload.downcast_ref::<&str>() {
@@ -231,7 +311,7 @@ struct StreamWorkerGuard {
     active_stream_worker: Arc<AtomicU64>,
     active_engine_lease: Arc<AtomicU64>,
     stream_active: Arc<AtomicBool>,
-    stream_cancel: Arc<Mutex<Option<(u64, CancelToken)>>>,
+    stream_control: SharedStreamControl,
 }
 
 impl Drop for StreamWorkerGuard {
@@ -239,8 +319,14 @@ impl Drop for StreamWorkerGuard {
         if self.active_stream_worker.load(Ordering::Acquire) == self.worker_id {
             self.stream_active.store(false, Ordering::Release);
         }
-        let mut cancel = self.stream_cancel.lock().unwrap_or_else(|e| e.into_inner());
-        if cancel.as_ref().is_some_and(|(id, _)| *id == self.worker_id) {
+        let mut cancel = self
+            .stream_control
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        if cancel
+            .as_ref()
+            .is_some_and(|control| control.worker_id == self.worker_id)
+        {
             *cancel = None;
         }
         let _ = self.active_engine_lease.compare_exchange(
@@ -277,7 +363,7 @@ pub struct TranscriptionManager {
     /// True while native streaming or pause-based live decoding is active.
     /// Used for overlay/UI decisions; independent of the model's native caps.
     stream_active: Arc<AtomicBool>,
-    stream_cancel: Arc<Mutex<Option<(u64, CancelToken)>>>,
+    stream_control: SharedStreamControl,
     /// Streaming uses four independent flags: router open = frames should route,
     /// worker active = no second worker may start, engine lease = engine is out
     /// of the mutex, stream active = UI should show a live session.
@@ -309,7 +395,7 @@ impl TranscriptionManager {
             reload_model_on_next_use: Arc::new(AtomicBool::new(false)),
             router: Arc::new(StreamRouter::new()),
             stream_active: Arc::new(AtomicBool::new(false)),
-            stream_cancel: Arc::new(Mutex::new(None)),
+            stream_control: Arc::new(Mutex::new(None)),
             next_stream_worker_id: Arc::new(AtomicU64::new(1)),
             active_stream_worker: Arc::new(AtomicU64::new(0)),
             active_engine_lease: Arc::new(AtomicU64::new(0)),
@@ -862,8 +948,10 @@ impl TranscriptionManager {
             return;
         }
         let rx = self.router.open();
-        *self.stream_cancel.lock().unwrap_or_else(|e| e.into_inner()) =
-            Some((worker_id, CancelToken::new()));
+        *self
+            .stream_control
+            .lock()
+            .unwrap_or_else(|e| e.into_inner()) = Some(StreamControl::new(worker_id));
         self.stream_active.store(false, Ordering::Release);
 
         let manager = self.clone();
@@ -876,7 +964,20 @@ impl TranscriptionManager {
             active_stream_worker: Arc::clone(&self.active_stream_worker),
             active_engine_lease: Arc::clone(&self.active_engine_lease),
             stream_active: Arc::clone(&self.stream_active),
-            stream_cancel: Arc::clone(&self.stream_cancel),
+            stream_control: Arc::clone(&self.stream_control),
+        };
+
+        let control = self
+            .stream_control
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .as_ref()
+            .filter(|control| control.worker_id == worker_id)
+            .cloned();
+        let Some(control) = control else {
+            self.router.clear();
+            drain_until_finalize(rx);
+            return;
         };
 
         // Wait for any in-progress model load to finish (start_stream races the
@@ -991,14 +1092,10 @@ impl TranscriptionManager {
         };
 
         if let LoadedEngine::TranscribeCpp(session) = &mut engine {
-            let cancel = self.stream_cancel.lock().unwrap_or_else(|e| e.into_inner());
-            if let Some((id, token)) = cancel.as_ref() {
-                if *id == worker_id {
-                    session.set_cancel_token(token);
-                }
-            }
+            session.set_cancel_token(&control.cancel);
         }
         if !supports_streaming && chunked {
+            control.set_mode(LiveDecodeMode::Chunked);
             self.run_chunked_worker(
                 rx,
                 engine,
@@ -1041,6 +1138,7 @@ impl TranscriptionManager {
                 }
             };
 
+            control.set_mode(LiveDecodeMode::NativeStream);
             self.stream_active.store(true, Ordering::Release);
             self.touch_activity();
             info!(
@@ -1262,19 +1360,33 @@ impl TranscriptionManager {
         let Some(tx) = self.router.take() else {
             return Ok(None);
         };
+        let control = self
+            .stream_control
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
+            .unwrap_or_else(|| StreamControl::new(0));
         let (reply_tx, reply_rx) = mpsc::channel();
         if tx.send(StreamCmd::Finalize(reply_tx)).is_err() {
             return Ok(None);
         }
-        let finalized = match reply_rx.recv_timeout(STREAM_FINALIZE_REPLY_TIMEOUT) {
+        let finalized = match wait_for_live_result(
+            &reply_rx,
+            &control,
+            NATIVE_STREAM_FINALIZE_TIMEOUT,
+            FINALIZE_CANCEL_POLL_INTERVAL,
+        ) {
             Ok(Some(finalized)) => finalized,
             Ok(None) => return Ok(None),
-            Err(mpsc::RecvTimeoutError::Disconnected) => return Ok(None),
-            Err(mpsc::RecvTimeoutError::Timeout) => {
+            Err(FinalizeWaitError::Cancelled) => {
+                self.stream_active.store(false, Ordering::Release);
+                return Err(anyhow::anyhow!("Live transcription was cancelled"));
+            }
+            Err(FinalizeWaitError::NativeStreamTimeout) => {
                 self.stream_active.store(false, Ordering::Release);
                 return Err(anyhow::anyhow!(
                     "Timed out waiting {:?} for live transcription to finalize",
-                    STREAM_FINALIZE_REPLY_TIMEOUT
+                    NATIVE_STREAM_FINALIZE_TIMEOUT
                 ));
             }
         };
@@ -1304,13 +1416,13 @@ impl TranscriptionManager {
 
     /// Abandon any active stream without producing text (e.g. on cancel).
     pub fn cancel_stream(&self) {
-        if let Some((_, token)) = self
-            .stream_cancel
+        if let Some(control) = self
+            .stream_control
             .lock()
             .unwrap_or_else(|e| e.into_inner())
             .as_ref()
         {
-            token.cancel();
+            control.cancel.cancel();
         }
         if let Some(tx) = self.router.take() {
             let _ = tx.send(StreamCmd::Cancel);
@@ -2384,6 +2496,102 @@ pub fn get_available_accelerators() -> AvailableAccelerators {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const TEST_NATIVE_TIMEOUT: Duration = Duration::from_millis(20);
+    const TEST_POLL: Duration = Duration::from_millis(2);
+
+    #[test]
+    fn chunked_finalization_can_finish_beyond_the_native_stream_timeout() {
+        let (tx, rx) = mpsc::channel();
+        let control = StreamControl::new(1);
+        control.set_mode(LiveDecodeMode::Chunked);
+        let worker = thread::spawn(move || {
+            thread::sleep(TEST_NATIVE_TIMEOUT * 3);
+            tx.send(Some("complete transcript")).unwrap();
+        });
+        assert_eq!(
+            wait_for_live_result(&rx, &control, TEST_NATIVE_TIMEOUT, TEST_POLL),
+            Ok(Some("complete transcript"))
+        );
+        worker.join().unwrap();
+    }
+
+    #[test]
+    fn native_stream_finalization_still_has_a_deadline() {
+        let (tx, rx) = mpsc::channel::<Option<()>>();
+        let control = StreamControl::new(1);
+        control.set_mode(LiveDecodeMode::NativeStream);
+        assert_eq!(
+            wait_for_live_result(&rx, &control, TEST_NATIVE_TIMEOUT, TEST_POLL),
+            Err(FinalizeWaitError::NativeStreamTimeout)
+        );
+        drop(tx);
+    }
+
+    #[test]
+    fn queued_model_loading_does_not_expire_chunked_finalization() {
+        let (tx, rx) = mpsc::channel();
+        let control = StreamControl::new(1);
+        let loaded = control.clone();
+        let worker = thread::spawn(move || {
+            thread::sleep(TEST_NATIVE_TIMEOUT * 3);
+            loaded.set_mode(LiveDecodeMode::Chunked);
+            thread::sleep(TEST_NATIVE_TIMEOUT * 3);
+            tx.send(Some("loaded and decoded")).unwrap();
+        });
+        assert_eq!(
+            wait_for_live_result(&rx, &control, TEST_NATIVE_TIMEOUT, TEST_POLL),
+            Ok(Some("loaded and decoded"))
+        );
+        worker.join().unwrap();
+    }
+
+    #[test]
+    fn native_flush_deadline_begins_after_model_loading() {
+        let (tx, rx) = mpsc::channel();
+        let control = StreamControl::new(1);
+        let loaded = control.clone();
+        let worker = thread::spawn(move || {
+            thread::sleep(TEST_NATIVE_TIMEOUT * 3);
+            loaded.set_mode(LiveDecodeMode::NativeStream);
+            tx.send(Some("flushed")).unwrap();
+        });
+        assert_eq!(
+            wait_for_live_result(&rx, &control, TEST_NATIVE_TIMEOUT, TEST_POLL),
+            Ok(Some("flushed"))
+        );
+        worker.join().unwrap();
+    }
+
+    #[test]
+    fn chunked_and_loading_waits_remain_cancellable() {
+        for mode in [LiveDecodeMode::Starting, LiveDecodeMode::Chunked] {
+            let (tx, rx) = mpsc::channel::<Option<()>>();
+            let control = StreamControl::new(1);
+            control.set_mode(mode);
+            let cancel = control.cancel.clone();
+            let worker = thread::spawn(move || {
+                thread::sleep(TEST_NATIVE_TIMEOUT * 2);
+                cancel.cancel();
+            });
+            assert_eq!(
+                wait_for_live_result(&rx, &control, TEST_NATIVE_TIMEOUT, TEST_POLL),
+                Err(FinalizeWaitError::Cancelled)
+            );
+            worker.join().unwrap();
+            drop(tx);
+        }
+    }
+
+    #[test]
+    fn disconnected_finalization_can_fall_back_to_batch() {
+        let (tx, rx) = mpsc::channel::<Option<()>>();
+        drop(tx);
+        assert_eq!(
+            wait_for_live_result(&rx, &StreamControl::new(1), TEST_NATIVE_TIMEOUT, TEST_POLL),
+            Ok(None)
+        );
+    }
 
     fn languages(codes: &[&str]) -> Vec<String> {
         codes.iter().map(|code| (*code).to_string()).collect()

@@ -85,6 +85,11 @@ is retried on shorter audio; a permanent failure is never reported as a complete
 transcript. Live and saved-recording sample counts must agree before a live
 result is used. Parakeet Unified EN retains native streaming.
 
+Finalization distinguishes native streaming from chunked inference. Only a native
+stream flush has a 30-second deadline, beginning after the model is ready.
+Chunked inference and pending model loading wait for completion with cancellation
+polling, so slower hardware does not discard a valid transcript at that deadline.
+
 `cargo run --example dictation_eval -- MODEL LANGUAGE WORDS_JSON WAV...` evaluates
 the same local vocabulary and live decode helpers using 16 kHz mono int16 WAVs.
 It reports updates before stopping and final-tail time, and checks native
